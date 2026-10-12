@@ -46,7 +46,7 @@ $adminInitialForNav = function_exists('mb_substr') && function_exists('mb_strtou
             <i class="fa-solid fa-grid-2" aria-hidden="true"></i>
             <span>Overview</span>
         </a>
-        <a class="nav-link" href="dashboard.php#students">
+        <a class="nav-link" href="../../pages/admin/course_categories.php">
             <i class="fa-solid fa-users" aria-hidden="true"></i>
             <span>Student Accounts</span>
         </a>
