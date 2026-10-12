@@ -10,7 +10,7 @@
     <title>Student Management System</title>
 
     <!-- External CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="public/css/index.css">
 
 </head>
 
