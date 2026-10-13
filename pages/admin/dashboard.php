@@ -111,6 +111,11 @@ function statusClass(string $status): string
     };
 }
 ?>
+
+<?php
+$currentPage = basename($_SERVER['PHP_SELF']);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

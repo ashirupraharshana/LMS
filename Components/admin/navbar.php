@@ -1,8 +1,7 @@
 <?php
-/**
- * Shared responsive admin sidebar.
- * Expected variables from the page: $adminName, $stats, $_SESSION['csrf_token'], escapeOutput().
- */
+
+$currentPage = basename($_SERVER['PHP_SELF']);
+
 $adminNameForNav = trim((string) ($adminName ?? 'Administrator'));
 if ($adminNameForNav === '') {
     $adminNameForNav = 'Administrator';
@@ -16,19 +15,19 @@ $adminInitialForNav = function_exists('mb_substr') && function_exists('mb_strtou
 
 <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
 
-<!-- Mobile sidebar header -->
-<div class="sidebar-mobile-header">
-    <span>Navigation</span>
+    <!-- Mobile sidebar header -->
+    <div class="sidebar-mobile-header">
+        <span>Navigation</span>
 
-    <button
-        type="button"
-        class="sidebar-close-btn"
-        id="closeSidebar"
-        aria-label="Close navigation">
+        <button
+            type="button"
+            class="sidebar-close-btn"
+            id="closeSidebar"
+            aria-label="Close navigation">
 
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-    </button>
-</div>
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    </div>
 
     <a class="brand" href="../../index.php" aria-label="Student Portal home">
         <span class="brand-icon"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i></span>
@@ -38,17 +37,27 @@ $adminInitialForNav = function_exists('mb_substr') && function_exists('mb_strtou
         </span>
     </a>
 
-    
+
 
     <div class="nav-label">Workspace</div>
     <nav class="nav-links" aria-label="Admin workspace">
-        <a class="nav-link active" href="dashboard.php" aria-current="page">
+        <a class="nav-link <?= ($currentPage === 'dashboard.php') ? 'active' : '' ?>"
+            href="dashboard.php"
+            <?= ($currentPage === 'dashboard.php') ? 'aria-current="page"' : '' ?>>
+
             <i class="fa-solid fa-grid-2" aria-hidden="true"></i>
             <span>Overview</span>
         </a>
-        <a class="nav-link" href="../../pages/admin/course_categories.php">
-            <i class="fa-solid fa-users" aria-hidden="true"></i>
-            <span>Student Accounts</span>
+        <a class="nav-link <?= ($currentPage === 'course_categories.php') ? 'active' : '' ?>"
+            href="../../pages/admin/course_categories.php">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            <span>Categories</span>
+        </a>
+        <a class="nav-link <?= ($currentPage === 'manage_courses.php') ? 'active' : '' ?>"
+            href="../../pages/admin/manage_courses.php">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            <span>Courses</span>
+        </a>
         </a>
         <a class="nav-link" href="dashboard.php#pending">
             <i class="fa-regular fa-clock" aria-hidden="true"></i>
