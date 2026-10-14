@@ -1,6 +1,20 @@
 <?php
 
+
+// Define the helper only if the current page has not already defined it.
+if (!function_exists('escapeOutput')) {
+    function escapeOutput(mixed $value): string
+    {
+        return htmlspecialchars(
+            (string) $value,
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+    }
+}
+
 $currentPage = basename($_SERVER['PHP_SELF']);
+
 
 $adminNameForNav = trim((string) ($adminName ?? 'Administrator'));
 if ($adminNameForNav === '') {
@@ -58,6 +72,20 @@ $adminInitialForNav = function_exists('mb_substr') && function_exists('mb_strtou
             <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
             <span>Courses</span>
         </a>
+        <a class="nav-link <?= ($currentPage === 'manage_students.php') ? 'active' : '' ?>"
+            href="../../pages/admin/manage_students.php">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            <span>Student</span>
+        </a>
+        <a class="nav-link <?= ($currentPage === 'register.php') ? 'active' : '' ?>"
+            href="../../pages/admin/register.php">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            <span>Register</span>
+        </a>
+        <a class="nav-link <?= ($currentPage === 'apply_courses.php') ? 'active' : '' ?>"
+            href="../../pages/admin/apply_courses.php">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            <span>apply_courses</span>
         </a>
         <a class="nav-link" href="dashboard.php#pending">
             <i class="fa-regular fa-clock" aria-hidden="true"></i>
