@@ -26,11 +26,11 @@
         <!-- Navigation Menu -->
         <div class="nav-menu" id="navMenu">
 
-            <a href="/LMS/index.php" class="nav-link">
+            <a href="/LMS/pages/public/homepage.php" class="nav-link">
                 Home
             </a>
 
-            <a href="/LMS/pages/courses.php" class="nav-link">
+            <a href="/LMS/pages/public/courses.php" class="nav-link">
                 Courses
             </a>
 
