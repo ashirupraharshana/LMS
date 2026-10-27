@@ -157,16 +157,16 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#382720">
     <title>Explore Courses | Student Management System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="/LMS/Components/public/css/navbar.css">
     <style>
         :root {
-            --public-course-primary: #4f46e5;
-            --public-course-primary-dark: #3730a3;
-            --public-course-text: #172033;
-            --public-course-muted: #6b7280;
+            --public-course-primary: #9a0002;
+            --public-course-primary-dark: #9a0002;
+            --public-course-text: #382720;
+            --public-course-muted: #9a0002;
             --public-course-border: #e5e7eb;
             --public-course-background: #f6f7fb;
         }
@@ -210,7 +210,7 @@ try {
 
         .public-courses-hero h1 {
             margin: 10px 0 8px;
-            color: #111827;
+            color: #382720;
             font-size: clamp(28px, 4vw, 42px);
             line-height: 1.15;
             letter-spacing: -.04em;
@@ -230,7 +230,7 @@ try {
             border: 1px solid var(--public-course-border);
             border-radius: 12px;
             background: #fff;
-            color: #4b5563;
+            color: #9a0002;
             font-size: 12px;
             font-weight: 750;
         }
@@ -265,7 +265,7 @@ try {
             top: 50%;
             left: 14px;
             transform: translateY(-50%);
-            color: #9ca3af;
+            color: #9a0002;
             font-size: 13px;
             pointer-events: none;
         }
@@ -278,13 +278,13 @@ try {
             border-radius: 10px;
             outline: none;
             background: #fff;
-            color: #1f2937;
+            color: #382720;
             font: inherit;
             font-size: 13px;
         }
 
         .public-courses-search-input:focus {
-            border-color: #818cf8;
+            border-color: #9a0002;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
         }
 
@@ -298,14 +298,14 @@ try {
             border-radius: 10px;
             outline: none;
             background: #fff;
-            color: #1f2937;
+            color: #382720;
             font: inherit;
             font-size: 13px;
             cursor: pointer;
         }
 
         .public-courses-category-select:focus {
-            border-color: #818cf8;
+            border-color: #9a0002;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
         }
 
@@ -352,7 +352,7 @@ try {
         .public-courses-btn-light {
             border-color: var(--public-course-border);
             background: #fff;
-            color: #4b5563;
+            color: #9a0002;
         }
 
         .public-courses-btn-light:hover {
@@ -361,7 +361,7 @@ try {
 
         .public-courses-results-label {
             margin: 0 0 14px;
-            color: #6b7280;
+            color: #9a0002;
             font-size: 12px;
         }
 
@@ -385,7 +385,7 @@ try {
 
         .public-course-card:hover {
             transform: translateY(-3px);
-            border-color: #d9dcfe;
+            border-color: #efe6dd;
             box-shadow: 0 12px 28px rgba(15, 23, 42, .08);
         }
 
@@ -416,7 +416,7 @@ try {
             padding: 7px 9px;
             border-radius: 9px;
             background: #f3f4f6;
-            color: #4b5563;
+            color: #9a0002;
             font-size: 10px;
             font-weight: 800;
             line-height: 1.4;
@@ -426,7 +426,7 @@ try {
 
         .public-course-card h2 {
             margin: 0 0 10px;
-            color: #111827;
+            color: #382720;
             font-size: 18px;
             line-height: 1.4;
             letter-spacing: -.02em;
@@ -438,7 +438,7 @@ try {
             min-height: 67px;
             margin: 0 0 20px;
             overflow: hidden;
-            color: #6b7280;
+            color: #9a0002;
             font-size: 13px;
             line-height: 1.7;
             overflow-wrap: anywhere;
@@ -447,7 +447,7 @@ try {
         }
 
         .public-course-description-empty {
-            color: #9ca3af;
+            color: #9a0002;
             font-style: italic;
         }
 
@@ -479,7 +479,7 @@ try {
             border: 1px solid #e9ecf2;
             border-radius: 14px;
             background: #fff;
-            color: #4b5563;
+            color: #9a0002;
             font-size: 13px;
             line-height: 1.65;
         }
@@ -506,25 +506,25 @@ try {
         .public-courses-empty i {
             display: block;
             margin-bottom: 13px;
-            color: #a5adbd;
+            color: #9a0002;
             font-size: 30px;
         }
 
         .public-courses-empty h2 {
             margin: 0 0 8px;
-            color: #263244;
+            color: #382720;
             font-size: 17px;
         }
 
         .public-courses-empty p {
             margin: 0;
-            color: #6b7280;
+            color: #9a0002;
             font-size: 13px;
         }
 
         .public-courses-footer-note {
             margin-top: 26px;
-            color: #8a93a3;
+            color: #9a0002;
             font-size: 12px;
             line-height: 1.7;
             text-align: center;
@@ -574,6 +574,7 @@ try {
             }
         }
     </style>
+<link rel="stylesheet" href="../../public/css/theme.css">
 </head>
 
 <body>
@@ -715,7 +716,7 @@ try {
         </div>
     </main>
 
-    <script src="js/navbar.js"></script>
+    
 </body>
 
 </html>

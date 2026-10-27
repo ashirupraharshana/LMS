@@ -1,23 +1,5 @@
-<?php include '../../Components/student/navbar.php'; ?>
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Student Management System</title>
-
-    <!-- External CSS -->
-    <link rel="stylesheet" href="../../Components/student/css/navbar.css">
-
-</head>
-
-<body>
-
-
-</body>
-</html>
+<?php
+$requiredRole='student'; require_once __DIR__.'/../../config/auth.php';
+function h($s){return htmlspecialchars((string)$s,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
+$q=$pdo->prepare('SELECT a.status,a.created_at,c.title FROM course_applications a JOIN courses c ON c.id=a.course_id WHERE a.student_user_id=? ORDER BY a.id DESC');$q->execute([$currentUser['id']]);$applications=$q->fetchAll();
+?><!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student dashboard | LMS</title><link rel="stylesheet" href="../../public/css/theme.css"></head><body><?php include __DIR__.'/../../Components/student/navbar.php';?><main class="public-content"><span class="eyebrow">YOUR LEARNING JOURNEY</span><h1>Welcome, <?=h($currentUser['full_name'])?></h1><p><?=h($currentUser['email'])?> · Active student</p><section class="card"><h2>Your linked course applications</h2><?php if(!$applications):?><p>No courses linked yet. Browse available courses or contact your administrator about an existing application.</p><?php else:?><div class="table-scroll"><table class="data-table"><thead><tr><th>Course</th><th>Status</th><th>Applied</th></tr></thead><tbody><?php foreach($applications as $a):?><tr><td><?=h($a['title'])?></td><td><?=h($a['status'])?></td><td><?=h($a['created_at'])?></td></tr><?php endforeach;?></tbody></table></div><?php endif;?><a class="btn" href="../public/courses.php">Explore courses</a></section></main></body></html>

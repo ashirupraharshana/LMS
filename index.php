@@ -1,4 +1,3 @@
 <?php
-require_once __DIR__ . '/pages/public/homepage.php';
-
-?>
+header('Location: pages/public/homepage.php');
+exit;

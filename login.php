@@ -120,18 +120,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#382720">
 
     <title>Login | Student Management System</title>
 
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
     <link
         rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+        href="public/vendor/fontawesome.css">
 
     <link rel="stylesheet" href="public/css/login.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="public/vendor/sweetalert2.all.min.js"></script>
+<link rel="stylesheet" href="public/css/theme.css">
 </head>
 
 <body>
@@ -470,7 +471,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 JSON_HEX_AMP
                         ) ?>,
                 confirmButtonText: 'Try again',
-                confirmButtonColor: '#5065e9',
+                confirmButtonColor: '#9a0002',
                 allowOutsideClick: false,
                 customClass: {
                     popup: 'login-swal-popup',
@@ -490,7 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 title: 'Successfully signed out!',
                 text: 'You have been logged out securely.',
                 confirmButtonText: 'Continue',
-                confirmButtonColor: '#5065e9',
+                confirmButtonColor: '#9a0002',
                 timer: 3000,
                 timerProgressBar: true,
                 customClass: {

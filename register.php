@@ -29,8 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Full name must not exceed 120 characters.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) {
         $error = 'Please enter a valid email address.';
-    } elseif (strlen($password) < 8) {
-        $error = 'Password must contain at least 8 characters.';
+    } elseif (strlen($password) < 8 || strlen($password) > 72) {
+        $error = 'Password must contain 8–72 bytes.';
     } elseif ($password !== $confirmPassword) {
         $error = 'Passwords do not match.';
     } else {
@@ -87,10 +87,11 @@ function escapeOutput($value): string
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#9a0002">
     <title>Student Registration | LMS</title>
     <link rel="stylesheet" href="public/css/register.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="public/vendor/fontawesome.css">
+<link rel="stylesheet" href="public/css/theme.css">
 </head>
 <body>
     <main class="register-page">
