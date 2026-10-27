@@ -5,13 +5,13 @@
 ========================================= */
 
 :root {
-    --primary: #5065e9;
-    --primary-dark: #394ed0;
+    --primary: #9a0002;
+    --primary-dark: #9a0002;
     --primary-light: #eef0ff;
 
-    --text-dark: #172033;
-    --text-body: #526078;
-    --text-muted: #8791a5;
+    --text-dark: #382720;
+    --text-body: #9a0002;
+    --text-muted: #9a0002;
 
     --border: #e4e8f0;
     --background: #f6f8fc;
@@ -130,9 +130,9 @@ input:focus-visible {
         ),
         linear-gradient(
             145deg,
-            #151d39 0%,
-            #10172d 55%,
-            #17234b 100%
+            #382720 0%,
+            #382720 55%,
+            #382720 100%
         );
 }
 
@@ -261,8 +261,8 @@ input:focus-visible {
     color: #ffffff;
     background: linear-gradient(
         145deg,
-        #8191ff,
-        #4b5fdf
+        #9a0002,
+        #9a0002
     );
 
     box-shadow:
@@ -286,7 +286,7 @@ input:focus-visible {
 }
 
 .brand-text span {
-    color: #abb7d2;
+    color: #d9bcb0;
     font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.2px;
@@ -321,7 +321,7 @@ input:focus-visible {
     border: 1px solid rgba(180, 192, 255, 0.15);
     border-radius: 100px;
 
-    color: #c4cdff;
+    color: #d9bcb0;
     background: rgba(113, 130, 255, 0.08);
 
     font-size: 9px;
@@ -352,7 +352,7 @@ input:focus-visible {
 }
 
 .showcase-content h2 span {
-    color: #94a4ff;
+    color: #d9bcb0;
 }
 
 .showcase-description {
@@ -360,7 +360,7 @@ input:focus-visible {
 
     margin: 23px 0 31px;
 
-    color: #b1bbd1;
+    color: #9a0002;
 
     font-size: 13px;
     line-height: 1.9;
@@ -393,7 +393,7 @@ input:focus-visible {
     border: 1px solid rgba(172, 184, 255, 0.13);
     border-radius: 13px;
 
-    color: #aab8ff;
+    color: #d9bcb0;
     background: rgba(123, 140, 255, 0.09);
 
     font-size: 15px;
@@ -412,7 +412,7 @@ input:focus-visible {
 }
 
 .feature-item div span {
-    color: #a4afc6;
+    color: #9a0002;
     font-size: 11px;
     line-height: 1.5;
 }
@@ -431,13 +431,13 @@ input:focus-visible {
     flex-shrink: 0;
 
     border-radius: 5px;
-    background: #7c8fff;
+    background: #9a0002;
 }
 
 .showcase-quote p {
     margin: 0;
 
-    color: #c5cce0;
+    color: #d9bcb0;
     font-size: 11px;
     font-style: italic;
     line-height: 1.6;
@@ -461,7 +461,7 @@ input:focus-visible {
 
     border-top: 1px solid rgba(255, 255, 255, 0.10);
 
-    color: #a7b2ca;
+    color: #9a0002;
     font-size: 10px;
 }
 
@@ -476,7 +476,7 @@ input:focus-visible {
 }
 
 .showcase-version {
-    color: #8997bb;
+    color: #9a0002;
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 1.1px;
@@ -521,7 +521,7 @@ input:focus-visible {
 
     border-radius: 11px;
 
-    color: #a5b4fc;
+    color: #d9bcb0;
     background: rgba(136, 153, 255, 0.13);
 }
 
@@ -537,7 +537,7 @@ input:focus-visible {
 }
 
 .floating-copy small {
-    color: #a9b5ce;
+    color: #9a0002;
     font-size: 9px;
 }
 
@@ -603,7 +603,7 @@ input:focus-visible {
     align-items: center;
     gap: 8px;
 
-    color: #8791a5;
+    color: #9a0002;
 
     font-size: 9px;
     font-weight: 800;
@@ -623,7 +623,7 @@ input:focus-visible {
     align-items: center;
     gap: 5px;
 
-    color: #8a93a5;
+    color: #9a0002;
 
     font-size: 10px;
     text-decoration: none;
@@ -680,14 +680,14 @@ input:focus-visible {
 
     margin-bottom: 25px;
 
-    border: 1px solid #e0e5ff;
+    border: 1px solid #efe6dd;
     border-radius: 17px;
 
     color: var(--primary);
     background: linear-gradient(
         145deg,
         #f1f3ff,
-        #e9edff
+        #efe6dd
     );
 
     box-shadow: 0 8px 20px rgba(80, 101, 233, 0.08);
@@ -708,7 +708,7 @@ input:focus-visible {
 .login-heading h1 {
     margin: 0;
 
-    color: #182238;
+    color: #382720;
 
     font-size: clamp(27px, 2.6vw, 35px);
     font-weight: 800;
@@ -784,7 +784,7 @@ input:focus-visible {
 }
 
 .form-group label {
-    color: #354057;
+    color: #382720;
 
     font-size: 12px;
     font-weight: 750;
@@ -833,7 +833,7 @@ input:focus-visible {
 }
 
 .input-wrapper:hover {
-    border-color: #c7d0e1;
+    border-color: #efe6dd;
 }
 
 .input-wrapper:focus-within {
@@ -850,7 +850,7 @@ input:focus-visible {
 
     width: 17px;
 
-    color: #929db1;
+    color: #9a0002;
 
     font-size: 14px;
     text-align: center;
@@ -876,14 +876,14 @@ input:focus-visible {
 
     outline: none !important;
 
-    color: #253047;
+    color: #382720;
     background: transparent;
 
     font-size: 12px;
 }
 
 .field-input::placeholder {
-    color: #a4adbd;
+    color: #9a0002;
     opacity: 1;
 }
 
@@ -896,7 +896,7 @@ input:focus-visible {
 .field-input:-webkit-autofill,
 .field-input:-webkit-autofill:hover,
 .field-input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #253047;
+    -webkit-text-fill-color: #382720;
     transition: background-color 9999s ease-in-out 0s;
 }
 
@@ -918,7 +918,7 @@ input:focus-visible {
     border: 0;
     border-radius: 9px;
 
-    color: #8c96a9;
+    color: #9a0002;
     background: transparent;
 
     font-size: 14px;
@@ -963,9 +963,9 @@ input:focus-visible {
     color: #ffffff;
     background: linear-gradient(
         110deg,
-        #5368ee 0%,
-        #4258df 55%,
-        #364bce 100%
+        #9a0002 0%,
+        #9a0002 55%,
+        #9a0002 100%
     );
 
     font-size: 12px;
@@ -1114,7 +1114,7 @@ input:focus-visible {
 }
 
 .login-divider span {
-    color: #a1a9b8;
+    color: #9a0002;
 
     font-size: 8px;
     font-weight: 800;
@@ -1134,7 +1134,7 @@ input:focus-visible {
 
     border-radius: 9px;
 
-    color: #758097;
+    color: #9a0002;
 
     font-size: 11px;
     font-weight: 700;
@@ -1178,7 +1178,7 @@ input:focus-visible {
     padding-top: 18px;
     border-top: 1px solid #e9edf4;
 
-    color: #9aa3b3;
+    color: #9a0002;
 
     font-size: 9px;
     line-height: 1.8;
@@ -1186,7 +1186,7 @@ input:focus-visible {
 }
 
 .footer-separator {
-    color: #c0c7d4;
+    color: #d9bcb0;
 }
 
 

@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+$requiredRole = 'admin';
+require_once __DIR__ . '/../../config/auth.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -121,10 +123,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#382720">
     <title>Admin Dashboard | Student Management System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="../../Components/admin/style/navbar.css">
+<link rel="stylesheet" href="../../public/css/theme.css">
 </head>
 <body>
 <div class="app">
@@ -160,7 +163,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <?php endif; ?>
 
             <section class="stats-grid" aria-label="Student statistics">
-                <article class="stat-card" style="--orb:#ecefff;--icon:#5668df;--icon-bg:#eef0ff">
+                <article class="stat-card" style="--orb:#ecefff;--icon:#9a0002;--icon-bg:#eef0ff">
                     <div class="stat-top"><span class="stat-label">Total students</span><span class="stat-icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span></div>
                     <div class="stat-number"><?= number_format((int) $stats['total_students']) ?></div>
                     <div class="stat-foot">Registered student accounts</div>
@@ -226,7 +229,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                                     </div>
                                 <?php endforeach; ?>
                             </div>
-                            <div class="panel-footer">To approve an account, change its status to <strong>active</strong> in your admin workflow or database.</div>
+                            <div class="panel-footer">To approve an account, change its status to <strong>active</strong> in <a href="manage_students.php?status=pending">Manage all students</a>.</div>
                         <?php else: ?>
                             <div class="empty-state"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>No pending student accounts. You’re all caught up.</div>
                         <?php endif; ?>

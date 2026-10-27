@@ -41,7 +41,7 @@ try {
     }
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $courseStmt = $pdo->query(
-        "SELECT id, title FROM courses WHERE status = 'published' ORDER BY title ASC"
+        "SELECT c.id, c.title FROM courses c JOIN course_categories cc ON cc.id=c.category_id WHERE c.status='published' AND cc.status='active' ORDER BY c.title ASC"
     );
     $courses = $courseStmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
@@ -75,7 +75,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $formError = 'Please select a course.';
         } else {
             try {
-                $checkCourse = $pdo->prepare("SELECT id FROM courses WHERE id = :id AND status = 'published'");
+                $checkCourse = $pdo->prepare("SELECT c.id FROM courses c JOIN course_categories cc ON cc.id=c.category_id WHERE c.id=:id AND c.status='published' AND cc.status='active'");
                 $checkCourse->execute([':id' => $courseId]);
                 if (!$checkCourse->fetchColumn()) {
                     $formError = 'That course is not available for applications. Please select another course.';
@@ -150,13 +150,13 @@ if (!$courses && $pageError === '') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#382720">
     <title>Apply for a Course | Student Management System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="/LMS/Components/public/css/navbar.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../../public/vendor/sweetalert2.all.min.js"></script>
     <style>
-        :root{--primary:#4f46e5;--text:#172033;--muted:#6b7280;--border:#e5e7eb;--bg:#f6f7fb}
+        :root{--primary:#9a0002;--text:#382720;--muted:#9a0002;--border:#e5e7eb;--bg:#f6f7fb}
         /* SweetAlert2 styling matched to the admin Categories page */
         .apply-swal-popup {
             border: 1px solid #e7eaf2 !important;
@@ -171,7 +171,7 @@ if (!$courses && $pageError === '') {
             padding: 12px 22px !important;
             border: 0 !important;
             border-radius: 10px !important;
-            background: #4f46e5 !important;
+            background: #9a0002 !important;
             color: #fff !important;
             font-size: 13px !important;
             font-weight: 700 !important;
@@ -189,7 +189,7 @@ if (!$courses && $pageError === '') {
             border: 1px solid #e5e7eb !important;
             border-radius: 10px !important;
             background: #fff !important;
-            color: #374151 !important;
+            color: #382720 !important;
             font-size: 13px !important;
             font-weight: 700 !important;
             cursor: pointer !important;
@@ -203,8 +203,8 @@ if (!$courses && $pageError === '') {
             background: #fff;
             text-align: center;
         }
-        .empty-courses > i { display:block; margin-bottom:10px; color:#9ca3af; font-size:25px; }
-        .empty-courses h2 { margin:0 0 6px; color:#263244; font-size:16px; }
+        .empty-courses > i { display:block; margin-bottom:10px; color:#9a0002; font-size:25px; }
+        .empty-courses h2 { margin:0 0 6px; color:#382720; font-size:16px; }
         .empty-courses p { margin:0; }
 
         *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
@@ -213,11 +213,12 @@ if (!$courses && $pageError === '') {
         .card{background:#fff;border:1px solid #e9ecf2;border-radius:20px;padding:clamp(22px,5vw,36px);box-shadow:0 12px 35px rgba(15,23,42,.06)}
         .eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--primary)}h1{margin:9px 0 8px;font-size:clamp(25px,4vw,34px);letter-spacing:-.03em}p{color:var(--muted);font-size:14px;line-height:1.65}
         .notice{padding:13px 15px;border-radius:12px;margin:16px 0;font-size:13px;line-height:1.6}.success{background:#ecfdf3;color:#166534}.error{background:#fef2f2;color:#991b1b}
-        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}.field{display:flex;flex-direction:column;gap:7px}.wide{grid-column:1/-1}label{font-size:12px;font-weight:750;color:#374151}
-        input,select,textarea{width:100%;border:1px solid #dfe3eb;border-radius:10px;padding:12px;background:#fff;color:#1f2937;font:inherit;font-size:13px;outline:none}textarea{min-height:110px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
-        .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:42px;padding:11px 16px;border:1px solid transparent;border-radius:10px;text-decoration:none;font-size:12px;font-weight:800;cursor:pointer}.primary{background:var(--primary);color:#fff}.light{border-color:var(--border);background:#fff;color:#4b5563}.foot{margin-top:18px;text-align:center;font-size:12px;color:#9ca3af}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}.field{display:flex;flex-direction:column;gap:7px}.wide{grid-column:1/-1}label{font-size:12px;font-weight:750;color:#382720}
+        input,select,textarea{width:100%;border:1px solid #dfe3eb;border-radius:10px;padding:12px;background:#fff;color:#382720;font:inherit;font-size:13px;outline:none}textarea{min-height:110px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#9a0002;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+        .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:42px;padding:11px 16px;border:1px solid transparent;border-radius:10px;text-decoration:none;font-size:12px;font-weight:800;cursor:pointer}.primary{background:var(--primary);color:#fff}.light{border-color:var(--border);background:#fff;color:#9a0002}.foot{margin-top:18px;text-align:center;font-size:12px;color:#9a0002}
         @media(max-width:600px){.page{margin:20px auto}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.actions .btn{flex:1}}
     </style>
+<link rel="stylesheet" href="../../public/css/theme.css">
 </head>
 <body>
 

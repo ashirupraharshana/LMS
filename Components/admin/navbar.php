@@ -39,7 +39,7 @@ $adminInitialForNav = function_exists('mb_substr') && function_exists('mb_strtou
             id="closeSidebar"
             aria-label="Close navigation">
 
-            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            ×
         </button>
     </div>
 
@@ -59,7 +59,7 @@ $adminInitialForNav = function_exists('mb_substr') && function_exists('mb_strtou
             href="dashboard.php"
             <?= ($currentPage === 'dashboard.php') ? 'aria-current="page"' : '' ?>>
 
-            <i class="fa-solid fa-grid-2" aria-hidden="true"></i>
+            <i class="fa-solid fa-table-columns" aria-hidden="true"></i>
             <span>Overview</span>
         </a>
         <a class="nav-link <?= ($currentPage === 'course_categories.php') ? 'active' : '' ?>"
@@ -72,32 +72,15 @@ $adminInitialForNav = function_exists('mb_substr') && function_exists('mb_strtou
             <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
             <span>Courses</span>
         </a>
-        <a class="nav-link <?= ($currentPage === 'manage_students.php') ? 'active' : '' ?>"
-            href="../../pages/admin/manage_students.php">
-            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
-            <span>Student</span>
-        </a>
-        <a class="nav-link <?= ($currentPage === 'register.php') ? 'active' : '' ?>"
-            href="../../pages/admin/register.php">
-            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
-            <span>Register</span>
-        </a>
-        <a class="nav-link <?= ($currentPage === 'apply_courses.php') ? 'active' : '' ?>"
-            href="../../pages/admin/apply_courses.php">
-            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
-            <span>apply_courses</span>
-        </a>
-        <a class="nav-link" href="dashboard.php#pending">
-            <i class="fa-regular fa-clock" aria-hidden="true"></i>
-            <span>Pending Approvals</span>
-            <?php if ($pendingCountForNav > 0): ?>
-                <span class="panel-count nav-pending-count"><?= $pendingCountForNav ?></span>
-            <?php endif; ?>
-        </a>
-        <a class="nav-link" href="../../courses.php">
-            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-            <span>Courses</span>
-        </a>
+        <details class="student-menu" <?= in_array($currentPage,['student_applications.php','add_student.php','manage_students.php'],true) ? 'open' : '' ?>>
+            <summary class="nav-link">♙ <span>Manage Student</span></summary>
+            <div class="subnav">
+            <?php foreach (['student_applications.php'=>'Student applications','add_student.php'=>'Add student','manage_students.php'=>'Manage all students'] as $link=>$label): ?>
+            <a class="nav-link <?= $currentPage===$link?'active':'' ?>" href="<?= $link ?>" <?= $currentPage===$link?'aria-current="page"':'' ?>><?= $label ?></a>
+            <?php endforeach; ?>
+            </div>
+        </details>
+        <a class="nav-link" href="../public/courses.php">↗ <span>Public course catalogue</span></a>
     </nav>
 
     <div class="sidebar-spacer"></div>
@@ -119,7 +102,7 @@ $adminInitialForNav = function_exists('mb_substr') && function_exists('mb_strtou
         <form action="logout.php" method="post" class="sidebar-logout-form">
             <input type="hidden" name="csrf_token" value="<?= escapeOutput($_SESSION['csrf_token'] ?? '') ?>">
             <button class="logout-mini" type="submit" aria-label="Log out" title="Log out">
-                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                ↪
             </button>
         </form>
     </div>

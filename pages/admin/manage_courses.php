@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+$requiredRole = 'admin';
+require_once __DIR__ . '/../../config/auth.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -76,7 +78,7 @@ if ($adminName === '') {
 $firstName = preg_split('/\s+/', $adminName)[0] ?? 'Administrator';
 $currentPage = basename($_SERVER['PHP_SELF']);
 
-$pdo = null;
+
 $pageError = '';
 $formError = '';
 $searchTerm = trim((string) ($_GET['q'] ?? ''));
@@ -250,7 +252,7 @@ if ($isPost) {
             error_log('Manage course operation error: ' . $e->getMessage());
             $sqlState = (string) ($e->errorInfo[0] ?? '');
             if ($postAction === 'delete' && $sqlState === '23000') {
-                $formError = 'This course cannot be deleted because it may be linked to enrolments or other course records.';
+                $formError = 'This course has application history and cannot be deleted. Set its status to Archived instead.';
             } else {
                 $formError = 'The operation could not be completed. Check the course details and try again.';
             }
@@ -354,11 +356,11 @@ if ($formError !== '') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#382720">
     <title>Manage Courses | Student Management System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="../../Components/admin/style/navbar.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../../public/vendor/sweetalert2.all.min.js"></script>
     <style>
         /* SweetAlert2 premium styling — matched to course_categories.php */
         .login-swal-popup {
@@ -374,7 +376,7 @@ if ($formError !== '') {
             padding: 12px 22px !important;
             border: 0 !important;
             border-radius: 10px !important;
-            background: #4f46e5 !important;
+            background: #9a0002 !important;
             color: #fff !important;
             font-size: 13px !important;
             font-weight: 700 !important;
@@ -391,40 +393,41 @@ if ($formError !== '') {
             border: 1px solid #e5e7eb !important;
             border-radius: 10px !important;
             background: #fff !important;
-            color: #374151 !important;
+            color: #382720 !important;
             font-size: 13px !important;
             font-weight: 700 !important;
         }
 
-        :root{--mc-primary:#4f46e5;--mc-primary-dark:#3730a3;--mc-text:#172033;--mc-muted:#6b7280;--mc-border:#e5e7eb;--mc-card:#fff}
+        :root{--mc-primary:#9a0002;--mc-primary-dark:#9a0002;--mc-text:#382720;--mc-muted:#9a0002;--mc-border:#e5e7eb;--mc-card:#fff}
         .course-content{width:100%;max-width:1500px;margin:0 auto;padding:28px clamp(16px,2.5vw,36px);color:var(--mc-text)}
         .course-welcome{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:25px}
         .course-eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--mc-primary);font-size:11px;font-weight:800;letter-spacing:.12em}
-        .course-welcome h1{margin:0;color:#111827;font-size:clamp(25px,3vw,32px);line-height:1.2;letter-spacing:-.035em}
+        .course-welcome h1{margin:0;color:#382720;font-size:clamp(25px,3vw,32px);line-height:1.2;letter-spacing:-.035em}
         .course-welcome p{margin:9px 0 0;color:var(--mc-muted);font-size:14px;line-height:1.6}
-        .course-date{flex-shrink:0;display:inline-flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid var(--mc-border);border-radius:12px;background:#fff;color:#4b5563;font-size:12px;font-weight:600}
+        .course-date{flex-shrink:0;display:inline-flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid var(--mc-border);border-radius:12px;background:#fff;color:#9a0002;font-size:12px;font-weight:600}
         .course-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:22px}
         .course-stat{padding:18px 19px;border:1px solid #edf0f5;border-radius:16px;background:#fff;box-shadow:0 4px 18px rgba(15,23,42,.035)}
-        .course-stat-label{color:var(--mc-muted);font-size:12px;font-weight:700}.course-stat-number{margin-top:10px;color:#111827;font-size:29px;font-weight:800;letter-spacing:-.04em}.course-stat-foot{margin-top:4px;color:#8a93a3;font-size:11px}
+        .course-stat-label{color:var(--mc-muted);font-size:12px;font-weight:700}.course-stat-number{margin-top:10px;color:#382720;font-size:29px;font-weight:800;letter-spacing:-.04em}.course-stat-foot{margin-top:4px;color:#9a0002;font-size:11px}
         .course-panel{min-width:0;margin-bottom:22px;overflow:hidden;border:1px solid #e9ecf2;border-radius:16px;background:#fff;box-shadow:0 5px 20px rgba(15,23,42,.035)}
         .course-panel-header{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px 22px;border-bottom:1px solid #edf0f4}
-        .course-panel-header h2{margin:0;color:#1f2937;font-size:16px;font-weight:800}.course-panel-header p{margin:5px 0 0;color:var(--mc-muted);font-size:12px;line-height:1.5}.course-panel-body{padding:22px}
+        .course-panel-header h2{margin:0;color:#382720;font-size:16px;font-weight:800}.course-panel-header p{margin:5px 0 0;color:var(--mc-muted);font-size:12px;line-height:1.5}.course-panel-body{padding:22px}
         .course-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px}.course-field{display:flex;flex-direction:column;gap:7px;min-width:0}.course-field.full{grid-column:1/-1}
-        .course-field label{color:#374151;font-size:12px;font-weight:700}.course-field .required{color:#dc2626}
-        .course-field input,.course-field select,.course-field textarea{width:100%;min-height:43px;padding:11px 12px;border:1px solid #dfe3eb;border-radius:10px;outline:none;background:#fff;color:#1f2937;font:inherit;font-size:13px;transition:border-color .18s ease,box-shadow .18s ease}
-        .course-field textarea{min-height:100px;resize:vertical}.course-field input:focus,.course-field select:focus,.course-field textarea:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}.course-help{color:#8a93a3;font-size:11px}
+        .course-field label{color:#382720;font-size:12px;font-weight:700}.course-field .required{color:#dc2626}
+        .course-field input,.course-field select,.course-field textarea{width:100%;min-height:43px;padding:11px 12px;border:1px solid #dfe3eb;border-radius:10px;outline:none;background:#fff;color:#382720;font:inherit;font-size:13px;transition:border-color .18s ease,box-shadow .18s ease}
+        .course-field textarea{min-height:100px;resize:vertical}.course-field input:focus,.course-field select:focus,.course-field textarea:focus{border-color:#9a0002;box-shadow:0 0 0 3px rgba(99,102,241,.12)}.course-help{color:#9a0002;font-size:11px}
         .course-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:20px}
         .course-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:10px 15px;border:1px solid transparent;border-radius:10px;cursor:pointer;text-decoration:none;font:inherit;font-size:12px;font-weight:750;transition:background .18s ease,transform .18s ease}.course-btn:hover{transform:translateY(-1px)}
-        .course-btn-primary{background:var(--mc-primary);color:#fff}.course-btn-primary:hover{background:var(--mc-primary-dark)}.course-btn-light{border-color:#dfe3eb;background:#fff;color:#4b5563}.course-btn-light:hover{background:#f8fafc}
-        .course-search{display:flex;width:min(100%,490px);align-items:center;gap:8px}.course-search-wrap{position:relative;flex:1;min-width:100px}.course-search-wrap i{position:absolute;top:50%;left:13px;transform:translateY(-50%);color:#9ca3af;font-size:13px}.course-search input{width:100%;height:40px;padding:9px 12px 9px 36px;border:1px solid #e0e4eb;border-radius:10px;outline:none;background:#fff;color:#1f2937;font:inherit;font-size:12px}
-        .course-table-wrap{width:100%;overflow-x:auto}.course-table{width:100%;border-collapse:collapse;text-align:left}.course-table th{padding:13px 16px;border-bottom:1px solid #e9edf3;background:#fafbfe;color:#8a93a3;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}.course-table td{padding:15px 16px;border-bottom:1px solid #f0f2f6;color:#4b5563;font-size:12px;vertical-align:middle}.course-table tbody tr:last-child td{border-bottom:0}.course-table tbody tr:hover{background:#fcfcff}
-        .course-title-cell{display:flex;align-items:center;gap:11px;min-width:180px}.course-title-icon{display:grid;flex:0 0 auto;place-items:center;width:36px;height:36px;border-radius:11px;background:#eef2ff;color:#4f46e5}.course-title-text strong{display:block;max-width:260px;overflow-wrap:anywhere;color:#1f2937;font-size:12px;font-weight:800}.course-title-text span{display:block;margin-top:4px;color:#9ca3af;font-size:10px}.course-description{display:block;max-width:320px;overflow-wrap:anywhere;color:#6b7280;line-height:1.5}
-        .course-status{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:capitalize;white-space:nowrap}.course-status:before{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;content:''}.course-status-published{background:#ecfdf3;color:#15803d}.course-status-draft{background:#fffbeb;color:#a16207}.course-status-archived{background:#f3f4f6;color:#6b7280}
-        .course-row-actions{display:flex;align-items:center;gap:6px;white-space:nowrap}.course-icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border:1px solid #e8ebf1;border-radius:9px;background:#fff;color:#6b7280;text-decoration:none;cursor:pointer}.course-icon-btn:hover{border-color:#c7d2fe;background:#eef2ff;color:#4338ca}.course-icon-btn.delete:hover{border-color:#fecaca;background:#fef2f2;color:#b91c1c}.course-inline-form{display:inline-flex;margin:0}
-        .course-empty{padding:42px 20px;text-align:center;color:#9ca3af}.course-empty i{display:block;margin-bottom:12px;color:#c7cdd8;font-size:28px}.course-empty strong{display:block;margin-bottom:6px;color:#4b5563;font-size:13px}.course-empty span{font-size:12px}.course-panel-footer{padding:13px 20px;border-top:1px solid #edf0f4;color:#9ca3af;font-size:11px}.course-footer{padding:12px 0 2px;color:#9ca3af;font-size:11px;text-align:center}
+        .course-btn-primary{background:var(--mc-primary);color:#fff}.course-btn-primary:hover{background:var(--mc-primary-dark)}.course-btn-light{border-color:#dfe3eb;background:#fff;color:#9a0002}.course-btn-light:hover{background:#f8fafc}
+        .course-search{display:flex;width:min(100%,490px);align-items:center;gap:8px}.course-search-wrap{position:relative;flex:1;min-width:100px}.course-search-wrap i{position:absolute;top:50%;left:13px;transform:translateY(-50%);color:#9a0002;font-size:13px}.course-search input{width:100%;height:40px;padding:9px 12px 9px 36px;border:1px solid #e0e4eb;border-radius:10px;outline:none;background:#fff;color:#382720;font:inherit;font-size:12px}
+        .course-table-wrap{width:100%;overflow-x:auto}.course-table{width:100%;border-collapse:collapse;text-align:left}.course-table th{padding:13px 16px;border-bottom:1px solid #e9edf3;background:#fafbfe;color:#9a0002;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}.course-table td{padding:15px 16px;border-bottom:1px solid #f0f2f6;color:#9a0002;font-size:12px;vertical-align:middle}.course-table tbody tr:last-child td{border-bottom:0}.course-table tbody tr:hover{background:#fcfcff}
+        .course-title-cell{display:flex;align-items:center;gap:11px;min-width:180px}.course-title-icon{display:grid;flex:0 0 auto;place-items:center;width:36px;height:36px;border-radius:11px;background:#eef2ff;color:#9a0002}.course-title-text strong{display:block;max-width:260px;overflow-wrap:anywhere;color:#382720;font-size:12px;font-weight:800}.course-title-text span{display:block;margin-top:4px;color:#9a0002;font-size:10px}.course-description{display:block;max-width:320px;overflow-wrap:anywhere;color:#9a0002;line-height:1.5}
+        .course-status{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:capitalize;white-space:nowrap}.course-status:before{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;content:''}.course-status-published{background:#ecfdf3;color:#15803d}.course-status-draft{background:#fffbeb;color:#a16207}.course-status-archived{background:#f3f4f6;color:#9a0002}
+        .course-row-actions{display:flex;align-items:center;gap:6px;white-space:nowrap}.course-icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border:1px solid #e8ebf1;border-radius:9px;background:#fff;color:#9a0002;text-decoration:none;cursor:pointer}.course-icon-btn:hover{border-color:#d9bcb0;background:#eef2ff;color:#9a0002}.course-icon-btn.delete:hover{border-color:#fecaca;background:#fef2f2;color:#b91c1c}.course-inline-form{display:inline-flex;margin:0}
+        .course-empty{padding:42px 20px;text-align:center;color:#9a0002}.course-empty i{display:block;margin-bottom:12px;color:#c7cdd8;font-size:28px}.course-empty strong{display:block;margin-bottom:6px;color:#9a0002;font-size:13px}.course-empty span{font-size:12px}.course-panel-footer{padding:13px 20px;border-top:1px solid #edf0f4;color:#9a0002;font-size:11px}.course-footer{padding:12px 0 2px;color:#9a0002;font-size:11px;text-align:center}
         @media(max-width:1000px){.course-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.course-panel-header{align-items:flex-start;flex-direction:column}.course-search{width:100%}}
         @media(max-width:620px){.course-content{padding:20px 13px}.course-welcome{flex-direction:column}.course-date{align-self:flex-start}.course-stats{gap:10px}.course-stat{padding:15px}.course-stat-number{font-size:25px}.course-panel-header,.course-panel-body{padding:17px 15px}.course-form-grid{grid-template-columns:1fr;gap:15px}.course-field.full{grid-column:auto}.course-search{flex-wrap:wrap}.course-search-wrap{flex-basis:100%}.course-search .course-btn{flex:1}}
     </style>
+<link rel="stylesheet" href="../../public/css/theme.css">
 </head>
 <body>
 <div class="app">
@@ -501,7 +504,7 @@ if ($formError !== '') {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <span class="course-help">Options are loaded from your course_categories database table.</span>
+                                <span class="course-help">Choose the category this course belongs to.</span>
                             </div>
                             <div class="course-field full">
                                 <label for="courseDescription">Description</label>
@@ -552,10 +555,10 @@ if ($formError !== '') {
                                     <td><span class="course-status course-status-<?= escapeOutput($course['status']) ?>"><?= escapeOutput($course['status']) ?></span></td>
                                     <td><?= escapeOutput(formatCourseDate($course['created_at'] ?? null)) ?></td>
                                     <td><div class="course-row-actions">
-                                        <a class="course-icon-btn" href="?edit=<?= (int) $course['id'] ?><?= $searchTerm !== '' ? '&amp;q=' . rawurlencode($searchTerm) : '' ?>" title="Edit course" aria-label="Edit <?= escapeOutput($course['title']) ?>"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></a>
+                                        <a class="course-icon-btn" href="?edit=<?= (int) $course['id'] ?><?= $searchTerm !== '' ? '&amp;q=' . rawurlencode($searchTerm) : '' ?>" title="Edit course" aria-label="Edit <?= escapeOutput($course['title']) ?>"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i> Edit</a>
                                         <form class="course-inline-form js-delete-course-form" method="post" action="manage_courses.php<?= $searchTerm !== '' ? '?q=' . rawurlencode($searchTerm) : '' ?>" data-course-title="<?= escapeOutput($course['title']) ?>">
                                             <input type="hidden" name="csrf_token" value="<?= escapeOutput($_SESSION['csrf_token']) ?>"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int) $course['id'] ?>"><input type="hidden" name="return_q" value="<?= escapeOutput($searchTerm) ?>">
-                                            <button class="course-icon-btn delete" type="submit" title="Delete course" aria-label="Delete <?= escapeOutput($course['title']) ?>"><i class="fa-regular fa-trash-can" aria-hidden="true"></i></button>
+                                            <button class="course-icon-btn delete" type="submit" title="Delete course" aria-label="Delete <?= escapeOutput($course['title']) ?>"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Delete</button>
                                         </form>
                                     </div></td>
                                 </tr>
