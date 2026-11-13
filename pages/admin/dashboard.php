@@ -279,5 +279,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 </div>
 
 <script src="https://cdn.datatables.net/v/dt/dt-3.1.5/datatables.min.js"></script><script src="../../js/admin-datatables.js" defer></script>
+<script src="../../public/vendor/sweetalert2.all.min.js"></script>
+<script src="../../js/lms-alerts.js" defer></script>
 </body>
 </html>

@@ -727,6 +727,8 @@ try {
     </main>
 
     
+<script src="../../public/vendor/sweetalert2.all.min.js"></script>
+<script src="../../js/lms-alerts.js" defer></script>
 </body>
 
 </html>

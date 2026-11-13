@@ -706,5 +706,6 @@ foreach ($courses as $courseItem) {
     });
 </script>
 <?php endif; ?>
+<script src="../../js/lms-alerts.js" defer></script>
 </body>
 </html>

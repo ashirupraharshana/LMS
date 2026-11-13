@@ -34,6 +34,8 @@ function spPageStart(string $title, array $currentUser, string $active): void
   <link rel="stylesheet" href="../../public/css/theme.css">
   <link rel="stylesheet" href="../../Components/student/css/navbar.css">
   <link rel="stylesheet" href="../../public/css/student-portal.css">
+  <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
+  <link rel="stylesheet" href="../../public/css/portal-shell.css">
 </head>
 <body class="student-portal">
 <?php include __DIR__ . '/../../Components/student/navbar.php'; ?>
@@ -44,6 +46,9 @@ function spPageEnd(): void
 {
     ?>
 <footer class="sp-footer">&copy; <?= date('Y') ?> LMS — Student Portal</footer>
+<script src="../../public/vendor/sweetalert2.all.min.js"></script>
+<script src="../../js/portal-sidebar.js"></script>
+<script src="../../js/lms-alerts.js"></script>
 </body>
 </html>
 <?php

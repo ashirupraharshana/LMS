@@ -30,7 +30,7 @@ try {
 }
 
 // Redirect users who have already logged in
-if (isset($_SESSION['user_id'])) {
+if (isset($_SESSION['user_id']) || (($_SESSION['role'] ?? '') === 'instructor' && !empty($_SESSION['instructor_id']))) {
     if (($_SESSION['role'] ?? '') === 'admin') {
         header('Location: pages/admin/dashboard.php');
         exit;
@@ -38,6 +38,10 @@ if (isset($_SESSION['user_id'])) {
 
     if (($_SESSION['role'] ?? '') === 'student') {
         header('Location: pages/student/dashboard.php');
+        exit;
+    }
+    if (($_SESSION['role'] ?? '') === 'instructor' && !empty($_SESSION['instructor_id'])) {
+        header('Location: pages/instructor/dashboard.php');
         exit;
     }
 }
@@ -73,8 +77,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute(['email' => $oldEmail, 'username' => $oldEmail]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Verify the stored password hash
-            if (!$user || !password_verify($password, $user['password_hash'])) {
+            // Instructors authenticate by email against the instructor directory.
+            // A matching user account always takes priority, avoiding account ambiguity.
+            if (!$user && filter_var($oldEmail, FILTER_VALIDATE_EMAIL)) {
+                $instructorQuery = $pdo->prepare('SELECT id, email, full_name, password_hash, status FROM instructors WHERE email = ? LIMIT 1');
+                $instructorQuery->execute([$oldEmail]);
+                $instructor = $instructorQuery->fetch(PDO::FETCH_ASSOC);
+                if ($instructor && !empty($instructor['password_hash']) && password_verify($password, $instructor['password_hash'])) {
+                    if ($instructor['status'] !== 'active') {
+                        $error = 'Your instructor account is inactive. Contact the administrator.';
+                    } else {
+                        session_regenerate_id(true);
+                        $_SESSION = ['instructor_id' => (int) $instructor['id'],
+                            'full_name' => $instructor['full_name'], 'email' => $instructor['email'],
+                            'role' => 'instructor', 'csrf_token' => bin2hex(random_bytes(32))];
+                        header('Location: pages/instructor/dashboard.php');
+                        exit;
+                    }
+                } else {
+                    $error = 'Incorrect username/email or password.';
+                }
+            } elseif (!$user || !password_verify($password, $user['password_hash'])) {
                 $error = 'Incorrect username/email or password.';
             } elseif ($user['status'] !== 'active') {
                 if ($user['status'] === 'pending') {
@@ -125,10 +148,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="auth-page">
     <main class="auth-shell">
-        <section class="auth-intro" aria-label="About the student portal">
-            <a class="auth-brand" href="index.php"><span class="auth-brand-mark">L.</span><span>LMS <small>STUDENT PORTAL</small></span></a>
-            <div class="auth-story"><span class="auth-kicker">LEARN / GROW / ACHIEVE</span><h2>Make room for<br><em>what's next.</em></h2><p>Browse courses, submit an application and access your learning information once an administrator activates your account.</p></div>
-            <div class="auth-footnote">COURSES &nbsp;·&nbsp; APPLICATIONS &nbsp;·&nbsp; STUDENTS</div>
+        <section class="auth-intro" aria-label="About the LMS portal">
+            <a class="auth-brand" href="index.php"><span class="auth-brand-mark">L.</span><span>LMS <small>LEARNING PORTAL</small></span></a>
+            <div class="auth-story"><span class="auth-kicker">LEARN / GROW / ACHIEVE</span><h2>Make room for<br><em>what's next.</em></h2><p>Browse courses, submit an application and access your learning information once an administrator activates your account. Instructors can sign in with their assigned email and password.</p></div>
+            <div class="auth-footnote">COURSES &nbsp;·&nbsp; STUDENTS &nbsp;·&nbsp; INSTRUCTORS</div>
         </section>
         <section class="auth-panel">
             <div class="auth-panel-top"><a href="pages/public/courses.php">← Browse courses</a><span>ACCOUNT ACCESS</span></div>
@@ -136,6 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="auth-title"><span class="auth-kicker">WELCOME BACK</span><h1>Log in</h1><p>Sign in with the credentials provided by your administrator.</p></div>
                 <?php if ($error !== ''): ?><div class="auth-alert" role="alert"><?= htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
                 <?php if (isset($_GET['logged_out'])): ?><div class="auth-alert auth-alert-neutral" role="status">You have been logged out.</div><?php endif; ?>
+                <?php if (isset($_GET['account_inactive'])): ?><div class="auth-alert" role="alert">Your account is no longer active. Contact the administrator.</div><?php endif; ?>
                 <form method="post" action="login.php" class="auth-form">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
                     <label for="email">Username or email</label>
@@ -149,6 +173,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <footer class="auth-panel-foot">&copy; <?= date('Y') ?> LMS · Student Management System</footer>
         </section>
     </main>
+    <script src="public/vendor/sweetalert2.all.min.js"></script>
+    <script src="js/lms-alerts.js" defer></script>
     <script>const toggle=document.getElementById('togglePassword');toggle.addEventListener('click',()=>{const input=document.getElementById('password');const visible=input.type==='password';input.type=visible?'text':'password';toggle.textContent=visible?'Hide':'Show';toggle.setAttribute('aria-pressed',String(visible));toggle.setAttribute('aria-label',visible?'Hide password':'Show password');});</script>
 </body>
 </html>

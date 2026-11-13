@@ -36,6 +36,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $error = 'Enter a valid email address (maximum 190 characters).';
     } elseif (spLen($formPhone) > 30) {
         $error = 'Your phone number must be at most 30 characters.';
+    } elseif ($emailChanged && (static function() use ($pdo, $formEmail): bool { $q=$pdo->prepare('SELECT id FROM instructors WHERE email=? LIMIT 1'); $q->execute([$formEmail]); return (bool)$q->fetchColumn(); })()) {
+        $error = 'This email is already used by an instructor.';
     } elseif (($emailChanged || $passwordChanged) && !password_verify($currentPassword, (string) $account['password_hash'])) {
         $error = 'Enter your current password to change your email or password.';
     } elseif ($passwordChanged && (strlen($newPassword) < 8 || strlen($newPassword) > 72)) {

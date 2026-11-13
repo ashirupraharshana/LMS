@@ -1,7 +1,4 @@
 document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('form[data-confirm]').forEach(form=>form.addEventListener('submit',e=>{
-    if(!window.confirm(form.dataset.confirm||'Confirm this action?')) e.preventDefault();
-  }));
   document.querySelectorAll('input[name="username"]').forEach(field=>{
     const hint=field.parentElement.querySelector('.username-hint');
     let timer=0;let serial=0;

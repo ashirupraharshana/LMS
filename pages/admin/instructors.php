@@ -32,15 +32,29 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     if($specialization===''||$len($specialization)>160)throw new InvalidArgumentException('Enter a specialization (max 160 characters).');
     if($len($qualifications)>500||$len($bio)>3000)throw new InvalidArgumentException('Qualifications or bio is too long.');
     if(!in_array($status,['active','inactive'],true))throw new InvalidArgumentException('Choose a valid status.');
+    // Account emails must be unique across instructor and admin/student login namespaces.
+    $userEmail = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+    $userEmail->execute([$email]);
+    if ($userEmail->fetchColumn()) throw new InvalidArgumentException('This email is already used by a student or admin account.');
+    $secret = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+    $secretConfirm = is_string($_POST['confirm_password'] ?? null) ? $_POST['confirm_password'] : '';
+    if ($action === 'create' || $secret !== '' || $secretConfirm !== '') {
+        if (strlen($secret) < 8 || strlen($secret) > 72) throw new InvalidArgumentException('Instructor password must be 8–72 bytes.');
+        if ($secret !== $secretConfirm) throw new InvalidArgumentException('Instructor passwords do not match.');
+    }
+    $hash = $secret !== '' ? password_hash($secret, PASSWORD_DEFAULT) : null;
     $previous=null;
     if($action==='edit'){$q=$pdo->prepare('SELECT photo_base64 FROM instructors WHERE id=?');$q->execute([$id]);$record=$q->fetch();if(!$record)throw new InvalidArgumentException('Instructor not found.');$previous=$record['photo_base64'];}
     $photo=lmsUploadImage('photo',$previous,'remove_photo');
     if($action==='create'){
-      $q=$pdo->prepare('INSERT INTO instructors(full_name,email,phone,specialization,qualifications,bio,status,photo_base64) VALUES(?,?,?,?,?,?,?,?)');
-      $q->execute([$name,$email,$phone?:null,$specialization,$qualifications?:null,$bio?:null,$status,$photo]);
+      $q=$pdo->prepare('INSERT INTO instructors(full_name,email,phone,specialization,qualifications,bio,status,photo_base64,password_hash) VALUES(?,?,?,?,?,?,?,?,?)');
+      $q->execute([$name,$email,$phone?:null,$specialization,$qualifications?:null,$bio?:null,$status,$photo,$hash]);
     } else {
-      $q=$pdo->prepare('UPDATE instructors SET full_name=?,email=?,phone=?,specialization=?,qualifications=?,bio=?,status=?,photo_base64=? WHERE id=?');
-      $q->execute([$name,$email,$phone?:null,$specialization,$qualifications?:null,$bio?:null,$status,$photo,$id]);
+      $sql='UPDATE instructors SET full_name=?,email=?,phone=?,specialization=?,qualifications=?,bio=?,status=?,photo_base64=?';
+      $params=[$name,$email,$phone?:null,$specialization,$qualifications?:null,$bio?:null,$status,$photo];
+      if ($hash !== null) { $sql.=',password_hash=?'; $params[]=$hash; }
+      $sql.=' WHERE id=?'; $params[]=$id;
+      $pdo->prepare($sql)->execute($params);
     }
     success('Instructor '.($action==='create'?'created':'updated').' successfully.','instructors.php?view=all');
  } catch(Throwable $e) { $error=operationError($e); }
@@ -49,12 +63,12 @@ $search=substr(trim((string)($_GET['q']??'')),0,100);
 $where='1=1';$params=[];
 if($view==='active'||$view==='inactive'){$where.=' AND status=?';$params[]=$view;}
 
-$list=$pdo->prepare("SELECT id,full_name,email,phone,specialization,qualifications,bio,status,photo_base64 FROM instructors WHERE $where ORDER BY id DESC");$list->execute($params);$instructors=$list->fetchAll();
+$list=$pdo->prepare("SELECT id,full_name,email,phone,specialization,qualifications,bio,status,photo_base64, (password_hash IS NOT NULL AND password_hash <> '') AS login_ready FROM instructors WHERE $where ORDER BY id DESC");$list->execute($params);$instructors=$list->fetchAll();
 $counts=$pdo->query("SELECT COUNT(*) AS total, COALESCE(SUM(status='active'),0) AS active, COALESCE(SUM(status='inactive'),0) AS inactive FROM instructors")->fetch();
 $values = ($_SERVER['REQUEST_METHOD']==='POST' && in_array(field('action'),['create','edit'],true)) ? $_POST : ($editing?:[]);
 $isForm=$view==='create'||$editing!==null||($_SERVER['REQUEST_METHOD']==='POST' && in_array(field('action'),['create','edit'],true));
 $pageTitle=$isForm?($editing?'Edit instructor':'Create instructor'):ucfirst($view).' instructors';
-startPage($pageTitle,'Create, assign and maintain instructor profiles and availability.');
+startPage($pageTitle,'Create instructor logins, assign courses and manage teaching staff.');
 ?>
 <div class="lms-module-hero">
   <div><span class="lms-module-kicker">FACULTY DIRECTORY</span><h2>People behind the learning.</h2><p>Organize your teaching team, course assignments, and instructor status in one place.</p>
@@ -64,12 +78,15 @@ startPage($pageTitle,'Create, assign and maintain instructor profiles and availa
 <div class="lms-stat-row"><a href="instructors.php?view=all" class="lms-mini-stat"><span>Total instructors</span><strong><?=number_format((int)$counts['total'])?></strong></a><a href="instructors.php?view=active" class="lms-mini-stat"><span>Active instructors</span><strong><?=number_format((int)$counts['active'])?></strong></a><a href="instructors.php?view=inactive" class="lms-mini-stat"><span>Inactive instructors</span><strong><?=number_format((int)$counts['inactive'])?></strong></a></div>
 <?php if($error): ?><div class="notice error" role="alert"><?=h($error)?></div><?php endif; ?>
 <?php if($isForm): ?>
-<section class="card"><div class="section-heading"><h2><?= $editing?'Edit instructor details':'Register new instructor' ?></h2><a class="btn secondary" href="instructors.php?view=all">Back to directory</a></div>
+<section class="card"><div class="section-heading"><h2><?= $editing?'Edit instructor details':'Create instructor & login' ?></h2><a class="btn secondary" href="instructors.php?view=all">Back to directory</a></div>
 <form method="post" enctype="multipart/form-data" class="lms-instructor-form">
   <?php csrf(); ?><input type="hidden" name="action" value="<?= $editing?'edit':'create' ?>"><?php if($editing):?><input type="hidden" name="id" value="<?=(int)$editing['id']?>"><?php endif; ?>
   <div class="form-grid">
     <label>Full name *<input type="text" name="full_name" maxlength="120" required value="<?=h($values['full_name']??'')?>" autocomplete="name"></label>
     <label>Email *<input type="email" name="email" maxlength="190" required value="<?=h($values['email']??'')?>" autocomplete="email"></label>
+    <label>Login password <?= $editing ? '(leave blank to keep current)' : '*' ?><input type="password" name="password" minlength="8" maxlength="72" autocomplete="new-password" <?= $editing ? '' : 'required' ?>></label>
+    <label>Confirm login password <?= $editing ? '' : '*' ?><input type="password" name="confirm_password" minlength="8" maxlength="72" autocomplete="new-password" <?= $editing ? '' : 'required' ?>></label>
+    <?php if($editing && empty($editing['password_hash'])): ?><p class="muted lms-full-width">This instructor has no login password yet. Set one before they can sign in.</p><?php endif; ?>
     <label>Phone<input type="tel" name="phone" maxlength="30" value="<?=h($values['phone']??'')?>" autocomplete="tel"></label>
     <label>Specialization *<input type="text" name="specialization" maxlength="160" required value="<?=h($values['specialization']??'')?>" placeholder="e.g. Software Engineering"></label>
     <label>Qualifications<input type="text" name="qualifications" maxlength="500" value="<?=h($values['qualifications']??'')?>" placeholder="e.g. BSc, MSc"></label>
@@ -89,13 +106,13 @@ startPage($pageTitle,'Create, assign and maintain instructor profiles and availa
 <tbody>
 <?php foreach ($instructors as $instructor): ?>
 <tr>
-  <td><div class="lms-person-cell"><span class="lms-table-avatar"><?php if($photo=lmsImageDataUri($instructor['photo_base64']??null)):?><img src="<?=h($photo)?>" alt="" loading="lazy"><?php else:?><?=h(strtoupper(substr($instructor['full_name'],0,1)))?><?php endif;?></span><span><strong><?=h($instructor['full_name'])?></strong><small>#<?=(int)$instructor['id']?></small></span></div></td>
+  <td><div class="lms-person-cell"><span class="lms-table-avatar"><?php if($photo=lmsImageDataUri($instructor['photo_base64']??null)):?><img src="<?=h($photo)?>" alt="" loading="lazy"><?php else:?><?=h(strtoupper(substr($instructor['full_name'],0,1)))?><?php endif;?></span><span><strong><?=h($instructor['full_name'])?></strong><small>#<?=(int)$instructor['id']?> · <?= $instructor['login_ready'] ? 'Login ready' : 'Set login password' ?></small></span></div></td>
   <td><?=h($instructor['specialization'])?></td>
   <td><?=h($instructor['email'])?><small><?=h($instructor['phone']?:'—')?></small></td>
   <td><span class="badge <?=h($instructor['status'])?>"><?=h(ucfirst($instructor['status']))?></span></td>
   <td><div class="actions lms-dt-actions">
     <a class="btn secondary small" href="instructors.php?edit=<?=(int)$instructor['id']?>">Edit</a>
-    <form method="post"><?php csrf();?><input type="hidden" name="action" value="status"><input type="hidden" name="id" value="<?=(int)$instructor['id']?>"><input type="hidden" name="status" value="<?=$instructor['status']==='active'?'inactive':'active'?>"><button class="btn secondary small" type="submit"><?=$instructor['status']==='active'?'Deactivate':'Activate'?></button></form>
+    <form method="post" data-confirm="Change this instructor's active status?"><?php csrf();?><input type="hidden" name="action" value="status"><input type="hidden" name="id" value="<?=(int)$instructor['id']?>"><input type="hidden" name="status" value="<?=$instructor['status']==='active'?'inactive':'active'?>"><button class="btn secondary small" type="submit"><?=$instructor['status']==='active'?'Deactivate':'Activate'?></button></form>
     <form method="post" data-confirm="Delete this instructor? Assigned courses will remain but will become unassigned."><?php csrf();?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?=(int)$instructor['id']?>"><button class="btn danger small" type="submit">Delete</button></form>
   </div></td>
 </tr>

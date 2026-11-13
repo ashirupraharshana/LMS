@@ -7,6 +7,11 @@ header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 require_once __DIR__ . '/database.php';
+// Instructor accounts are stored in the instructors table and have their own guard.
+if (($_SESSION['role'] ?? '') === 'instructor' && !empty($_SESSION['instructor_id'])) {
+    header('Location: ../instructor/dashboard.php');
+    exit;
+}
 $authQuery = $pdo->prepare('SELECT id, full_name, email, role, status, profile_photo_base64 FROM users WHERE id = ?');
 $authQuery->execute([$_SESSION['user_id'] ?? 0]);
 $currentUser = $authQuery->fetch();

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 13, 2026 at 09:31 AM
+-- Generation Time: Nov 13, 2026 at 10:40 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -88,6 +88,7 @@ CREATE TABLE `instructors` (
   `id` int(10) UNSIGNED NOT NULL,
   `full_name` varchar(120) NOT NULL,
   `email` varchar(190) NOT NULL,
+  `password_hash` varchar(255) DEFAULT NULL,
   `phone` varchar(30) DEFAULT NULL,
   `specialization` varchar(160) NOT NULL,
   `qualifications` varchar(500) DEFAULT NULL,

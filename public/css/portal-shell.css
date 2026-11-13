@@ -1,0 +1,52 @@
+/* Scoped role-based LMS workspace, one sidebar + one topbar. No external imagery. */
+.student-portal { --portal-side-width: 254px; }
+.student-portal .portal-sidebar, .student-portal .portal-topbar, .student-portal .portal-sidebar *,.student-portal .portal-topbar * { box-sizing: border-box; }
+.student-portal .portal-sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 110; width: var(--portal-side-width); background: #fff; border-right: 1px solid #e9e9e9; display: flex; flex-direction: column; padding: 23px 15px 18px; overflow-y: auto; }
+.student-portal .portal-brand { display: flex; align-items: center; gap: 11px; color: #161616; text-decoration: none; padding: 4px 8px 24px; font-weight: 900; font-size: 22px; }
+.student-portal .portal-brand-mark { display: grid; place-items: center; width: 39px; height: 39px; color: #fff; background: #111; border-radius: 11px; font-size: 23px; letter-spacing: -.1em; }
+.student-portal .portal-brand small { display: block; font-size: 9px; color: #888; letter-spacing: .14em; font-weight: 800; margin-top: 2px; }
+.student-portal .portal-account { display: flex; gap: 10px; align-items: center; min-width: 0; padding: 13px 9px; border: 1px solid #eee; background: #f8f8f8; border-radius: 13px; }
+.student-portal .portal-avatar { display: grid; place-items: center; width: 43px; height: 43px; flex-shrink: 0; border-radius: 12px; background: #111; color: #fff; font-size: 18px; font-weight: 800; overflow: hidden; }
+.student-portal .portal-avatar img,.student-portal .portal-top-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.student-portal .portal-account-details { min-width: 0; }
+.student-portal .portal-account-details strong { display: block; font-size: 12px; color: #171717; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.student-portal .portal-account-details small { display: block; font-size: 10px; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px; }
+.student-portal .portal-nav-caption { margin: 28px 10px 12px; font-size: 10px; font-weight: 850; letter-spacing: .13em; color: #8a8a8a; }
+.student-portal .portal-links { display: grid; gap: 6px; }
+.student-portal .portal-link { color: #616161; text-decoration: none; padding: 13px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; display: flex; gap: 12px; align-items: center; min-width: 0; }
+.student-portal .portal-link i { font-size: 15px; width: 19px; text-align: center; }
+.student-portal .portal-link:hover { background: #f3f3f3; color: #111; }
+.student-portal .portal-link.is-active { background: #111; color: #fff; }
+.student-portal .portal-sidebar-end { margin-top: auto; border-top: 1px solid #eee; padding-top: 17px; }
+.student-portal .portal-sidebar-end form { margin: 0; }
+.student-portal .portal-signout { color: #424242; border: 1px solid #e3e3e3; background: #fff; border-radius: 10px; width: 100%; min-height: 43px; display: flex; align-items: center; gap: 12px; text-align: left; padding: 10px 13px; font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
+.student-portal .portal-signout:hover { background: #f2f2f2; }
+.student-portal .portal-topbar { margin-left: var(--portal-side-width); height: 72px; padding: 0 30px; position: sticky; top: 0; z-index: 90; display: flex; justify-content: space-between; align-items: center; gap: 16px; background: rgba(255,255,255,.97); border-bottom: 1px solid #e8e8e8; }
+.student-portal .portal-topbar-left,.student-portal .portal-topbar-right { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.student-portal .portal-breadcrumb { font-size: 13px; font-weight: 650; color: #888; }
+.student-portal .portal-breadcrumb strong { color: #151515; }
+.student-portal .portal-breadcrumb>span { margin: 0 6px; }
+.student-portal .portal-role-chip { padding: 7px 11px; font-size: 10px; font-weight: 850; letter-spacing: .08em; color: #333; background: #f3f3f3; border-radius: 30px; text-transform: uppercase; }
+.student-portal .portal-top-account { min-width: 0; display: flex; align-items: center; gap: 9px; font-size: 12px; text-decoration: none; color: #222; font-weight: 750; }
+.student-portal .portal-top-account>span:last-child { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.student-portal .portal-top-avatar { width: 34px; height: 34px; border-radius: 50%; background: #111; color: #fff; display: grid; place-items: center; overflow: hidden; }
+.student-portal .portal-toggle { display: none; cursor: pointer; background: white; color: #151515; border: 1px solid #dedede; border-radius: 9px; height: 39px; width: 39px; }
+.student-portal .sp-main { max-width: none !important; margin: 0 0 0 var(--portal-side-width) !important; width: calc(100% - var(--portal-side-width)) !important; }
+.student-portal .sp-main > * { max-width: 1450px; }
+.student-portal .sp-footer { margin-left: var(--portal-side-width); }
+.student-portal .portal-backdrop { display: none; }
+@media(max-width: 980px) {
+  .student-portal .portal-sidebar { transform: translateX(-105%); transition: transform .2s ease; box-shadow: 15px 0 32px rgba(0,0,0,.06); }
+  .student-portal .portal-sidebar.is-open { transform: translateX(0); }
+  .student-portal .portal-topbar { margin-left: 0; padding: 0 18px; height: 66px; }
+  .student-portal .portal-toggle { display: grid; place-items: center; }
+  .student-portal .sp-main { margin-left: 0 !important; width: 100% !important; }
+  .student-portal .sp-footer { margin-left: 0; }
+  .student-portal .portal-backdrop:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.48); }
+}
+@media(max-width: 520px) {
+  .student-portal .portal-top-account>span:last-child, .student-portal .portal-role-chip { display: none; }
+  .student-portal .portal-breadcrumb { font-size: 12px; }
+  .student-portal .portal-topbar { padding: 0 14px; }
+}
+@media(prefers-reduced-motion:reduce){.student-portal .portal-sidebar{transition:none}}

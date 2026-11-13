@@ -35,7 +35,7 @@ if ($editId>0) {
     if (!$edit) $error='Student not found.';
     elseif ($_SERVER['REQUEST_METHOD']==='POST' && field('action')==='edit') $edit=array_merge($edit,array_intersect_key($_POST,array_flip(['full_name','email','phone','status','username'])));
 }
-$search=mb_substr(is_string($_GET['q']??null)?trim($_GET['q']):'',0,100);
+$search=(function_exists('mb_substr') ? mb_substr(is_string($_GET['q']??null)?trim($_GET['q']):'',0,100,'UTF-8') : substr(is_string($_GET['q']??null)?trim($_GET['q']):'',0,100));
 $status=is_string($_GET['status']??null)?$_GET['status']:'all';
 $where="role='student'"; $params=[];
 if (in_array($status,['active','inactive','pending'],true)) { $where.=' AND status=?'; $params[]=$status; }
