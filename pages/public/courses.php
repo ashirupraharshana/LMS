@@ -87,6 +87,8 @@ try {
                 c.id,
                 c.title,
                 c.description,
+                c.seat_capacity,
+                (SELECT COUNT(*) FROM course_applications a WHERE a.course_id=c.id AND a.status='approved') AS occupied_seats,
                 c.created_at,
                 cc.name AS category_name
             FROM courses AS c
@@ -163,12 +165,12 @@ try {
     <link rel="stylesheet" href="/LMS/Components/public/css/navbar.css">
     <style>
         :root {
-            --public-course-primary: #9a0002;
-            --public-course-primary-dark: #9a0002;
-            --public-course-text: #382720;
-            --public-course-muted: #9a0002;
-            --public-course-border: #e5e7eb;
-            --public-course-background: #f6f7fb;
+            --public-course-primary: #212121;
+            --public-course-primary-dark: #212121;
+            --public-course-text: #2a2a2a;
+            --public-course-muted: #212121;
+            --public-course-border: #e7e7e7;
+            --public-course-background: #f7f7f7;
         }
 
         .public-courses-page,
@@ -210,7 +212,7 @@ try {
 
         .public-courses-hero h1 {
             margin: 10px 0 8px;
-            color: #382720;
+            color: #2a2a2a;
             font-size: clamp(28px, 4vw, 42px);
             line-height: 1.15;
             letter-spacing: -.04em;
@@ -229,8 +231,8 @@ try {
             padding: 10px 13px;
             border: 1px solid var(--public-course-border);
             border-radius: 12px;
-            background: #fff;
-            color: #9a0002;
+            background: #ffffff;
+            color: #212121;
             font-size: 12px;
             font-weight: 750;
         }
@@ -242,10 +244,10 @@ try {
             gap: 16px;
             margin-bottom: 24px;
             padding: 16px;
-            border: 1px solid #e9ecf2;
+            border: 1px solid #ececec;
             border-radius: 16px;
-            background: #fff;
-            box-shadow: 0 5px 20px rgba(15, 23, 42, .035);
+            background: #ffffff;
+            box-shadow: 0 5px 20px rgba(23,23,23,.035);
         }
 
         .public-courses-search-form {
@@ -265,7 +267,7 @@ try {
             top: 50%;
             left: 14px;
             transform: translateY(-50%);
-            color: #9a0002;
+            color: #212121;
             font-size: 13px;
             pointer-events: none;
         }
@@ -274,18 +276,18 @@ try {
             width: 100%;
             min-height: 44px;
             padding: 11px 13px 11px 39px;
-            border: 1px solid #dfe3eb;
+            border: 1px solid #e3e3e3;
             border-radius: 10px;
             outline: none;
-            background: #fff;
-            color: #382720;
+            background: #ffffff;
+            color: #2a2a2a;
             font: inherit;
             font-size: 13px;
         }
 
         .public-courses-search-input:focus {
-            border-color: #9a0002;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
+            border-color: #212121;
+            box-shadow: 0 0 0 3px rgba(111,111,111,.12);
         }
 
 
@@ -294,19 +296,19 @@ try {
             min-width: 180px;
             max-width: 240px;
             padding: 11px 32px 11px 12px;
-            border: 1px solid #dfe3eb;
+            border: 1px solid #e3e3e3;
             border-radius: 10px;
             outline: none;
-            background: #fff;
-            color: #382720;
+            background: #ffffff;
+            color: #2a2a2a;
             font: inherit;
             font-size: 13px;
             cursor: pointer;
         }
 
         .public-courses-category-select:focus {
-            border-color: #9a0002;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
+            border-color: #212121;
+            box-shadow: 0 0 0 3px rgba(111,111,111,.12);
         }
 
         @media (max-width: 640px) {
@@ -342,7 +344,7 @@ try {
 
         .public-courses-btn-primary {
             background: var(--public-course-primary);
-            color: #fff;
+            color: #ffffff;
         }
 
         .public-courses-btn-primary:hover {
@@ -351,17 +353,17 @@ try {
 
         .public-courses-btn-light {
             border-color: var(--public-course-border);
-            background: #fff;
-            color: #9a0002;
+            background: #ffffff;
+            color: #212121;
         }
 
         .public-courses-btn-light:hover {
-            background: #f8fafc;
+            background: #fafafa;
         }
 
         .public-courses-results-label {
             margin: 0 0 14px;
-            color: #9a0002;
+            color: #212121;
             font-size: 12px;
         }
 
@@ -376,17 +378,17 @@ try {
             min-width: 0;
             flex-direction: column;
             padding: 22px;
-            border: 1px solid #e9ecf2;
+            border: 1px solid #ececec;
             border-radius: 17px;
-            background: #fff;
-            box-shadow: 0 5px 20px rgba(15, 23, 42, .035);
+            background: #ffffff;
+            box-shadow: 0 5px 20px rgba(23,23,23,.035);
             transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
         }
 
         .public-course-card:hover {
             transform: translateY(-3px);
-            border-color: #efe6dd;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+            border-color: #e7e7e7;
+            box-shadow: 0 12px 28px rgba(23,23,23,.08);
         }
 
         .public-course-card-top {
@@ -404,7 +406,7 @@ try {
             width: 46px;
             height: 46px;
             border-radius: 13px;
-            background: #eef2ff;
+            background: #f2f2f2;
             color: var(--public-course-primary);
             font-size: 18px;
         }
@@ -415,8 +417,8 @@ try {
             align-items: center;
             padding: 7px 9px;
             border-radius: 9px;
-            background: #f3f4f6;
-            color: #9a0002;
+            background: #f4f4f4;
+            color: #212121;
             font-size: 10px;
             font-weight: 800;
             line-height: 1.4;
@@ -426,7 +428,7 @@ try {
 
         .public-course-card h2 {
             margin: 0 0 10px;
-            color: #382720;
+            color: #2a2a2a;
             font-size: 18px;
             line-height: 1.4;
             letter-spacing: -.02em;
@@ -438,7 +440,7 @@ try {
             min-height: 67px;
             margin: 0 0 20px;
             overflow: hidden;
-            color: #9a0002;
+            color: #212121;
             font-size: 13px;
             line-height: 1.7;
             overflow-wrap: anywhere;
@@ -447,7 +449,7 @@ try {
         }
 
         .public-course-description-empty {
-            color: #9a0002;
+            color: #212121;
             font-style: italic;
         }
 
@@ -458,14 +460,14 @@ try {
             gap: 12px;
             margin-top: auto;
             padding-top: 16px;
-            border-top: 1px solid #f0f2f6;
+            border-top: 1px solid #f2f2f2;
         }
 
         .public-course-open-label {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            color: #15803d;
+            color: #646464;
             font-size: 11px;
             font-weight: 750;
         }
@@ -476,10 +478,10 @@ try {
 
         .public-courses-message {
             padding: 22px 18px;
-            border: 1px solid #e9ecf2;
+            border: 1px solid #ececec;
             border-radius: 14px;
-            background: #fff;
-            color: #9a0002;
+            background: #ffffff;
+            color: #212121;
             font-size: 13px;
             line-height: 1.65;
         }
@@ -489,42 +491,42 @@ try {
         }
 
         .public-courses-message-error {
-            border-color: #fecaca;
-            background: #fef2f2;
-            color: #991b1b;
+            border-color: #d5d5d5;
+            background: #f5f5f5;
+            color: #363636;
         }
 
         .public-courses-empty {
             grid-column: 1 / -1;
             padding: 52px 20px;
-            border: 1px dashed #d9deea;
+            border: 1px dashed #dedede;
             border-radius: 16px;
-            background: #fff;
+            background: #ffffff;
             text-align: center;
         }
 
         .public-courses-empty i {
             display: block;
             margin-bottom: 13px;
-            color: #9a0002;
+            color: #212121;
             font-size: 30px;
         }
 
         .public-courses-empty h2 {
             margin: 0 0 8px;
-            color: #382720;
+            color: #2a2a2a;
             font-size: 17px;
         }
 
         .public-courses-empty p {
             margin: 0;
-            color: #9a0002;
+            color: #212121;
             font-size: 13px;
         }
 
         .public-courses-footer-note {
             margin-top: 26px;
-            color: #9a0002;
+            color: #212121;
             font-size: 12px;
             line-height: 1.7;
             text-align: center;
@@ -669,7 +671,7 @@ try {
                         <?php else: ?>
 
                             Browse the published courses below. Applications are reviewed
-                            by an administrator before a student account is created.
+                            by an administrator before a username and password are assigned.
 
                         <?php endif; ?>
                 </p>
@@ -690,12 +692,13 @@ try {
                                 <p class="public-course-description public-course-description-empty">Course details will be provided by the course administrator.</p>
                             <?php endif; ?>
                             <div class="public-course-card-footer">
-                                <span class="public-course-open-label"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Applications open</span>
-
-                                <a class="public-courses-btn public-courses-btn-primary public-course-apply-btn"
-                                    href="apply_course.php?course_id=<?= (int) $course['id'] ?>">
-                                    Apply <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                                </a>
+                                <?php $filled=(int)$course['occupied_seats']; $capacity=(int)$course['seat_capacity']; $isFull=$filled >= $capacity; ?>
+                                <div class="course-availability"><strong><?= $filled ?> / <?= $capacity ?></strong> seats filled <div class="seat-meter" role="progressbar" aria-label="Seats filled" aria-valuemin="0" aria-valuemax="<?= $capacity ?>" aria-valuenow="<?= min($filled,$capacity) ?>"><span style="width:<?= $capacity ? min(100,round($filled*100/$capacity)) : 100 ?>%"></span></div></div>
+                                <?php if ($isFull): ?>
+                                    <span class="public-courses-btn public-courses-btn-primary public-course-apply-btn apply-disabled" aria-disabled="true"><i class="fa-solid fa-lock" aria-hidden="true"></i> Fully booked</span>
+                                <?php else: ?>
+                                    <a class="public-courses-btn public-courses-btn-primary public-course-apply-btn" href="apply_course.php?course_id=<?= (int)$course['id'] ?>">Apply <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                                <?php endif; ?>
 
                             </div>
                         </article>

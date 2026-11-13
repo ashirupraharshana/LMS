@@ -1,0 +1,60 @@
+/* Distinctive monochrome login layout, with no externally-hosted assets. */
+body.auth-page { background: #eee !important; min-height: 100vh; }
+.auth-shell { display: grid; grid-template-columns: minmax(320px,.9fr) minmax(430px,1.1fr); min-height: 100vh; max-width: 1720px; margin: 0 auto; background: #fff; }
+.auth-intro { color: #fff; display: flex; flex-direction: column; justify-content: space-between; padding: clamp(30px,4vw,62px); background-color: #141414; position: relative; overflow: hidden; }
+.auth-intro::after { content: ''; position: absolute; width: 380px; height: 380px; right: -165px; bottom: 13%; border: 1px solid #555; border-radius: 50%; box-shadow: 0 0 0 48px #141414,0 0 0 49px #474747,0 0 0 95px #141414,0 0 0 96px #363636; pointer-events: none; opacity: .6; }
+.auth-brand { display: inline-flex; align-items: center; gap: 12px; align-self: start; color: #fff !important; text-decoration: none; font-size: 19px; letter-spacing: -.04em; font-weight: 850; position: relative; z-index: 1; }
+.auth-brand small { display: block; font-size: 9px; color: #bbb; letter-spacing: .18em; font-weight: 750; }
+.auth-brand-mark { display: grid; place-items: center; width: 42px; height: 42px; color: #111; background: #fff; border-radius: 12px; font-size: 25px; }
+.auth-story { position: relative; z-index: 1; max-width: 620px; padding: 55px 0; }
+.auth-kicker { color: #848484; font-size: 10px; font-weight: 800; letter-spacing: .19em; }
+.auth-intro .auth-kicker { color: #c5c5c5; }
+.auth-story h2 { font-size: clamp(45px,5.9vw,88px); color: #fff !important; line-height: 1.03; letter-spacing: -.065em; margin: 20px 0 24px; }
+.auth-story h2 em { font-style: normal; color: #a5a5a5; }
+.auth-story p { font-size: clamp(14px,1.25vw,17px); color: #c2c2c2; line-height: 1.8; max-width: 450px; }
+.auth-footnote { font-size: 10px; color: #888; letter-spacing: .15em; position: relative; z-index: 1; }
+.auth-panel { display: flex; flex-direction: column; padding: clamp(27px,4.1vw,65px); min-width: 0; }
+.auth-panel-top { display: flex; justify-content: space-between; align-items: center; gap: 15px; color: #888; font-size: 10px; letter-spacing: .13em; font-weight: 800; }
+.auth-panel-top a { color: #3c3c3c; font-size: 12px; font-weight: 650; letter-spacing: 0; text-decoration: none; }
+.auth-form-wrap { width: min(100%, 440px); margin: auto; padding: 56px 0; }
+.auth-title h1 { font-size: clamp(42px,4.3vw,64px); margin: 9px 0 10px; font-weight: 820; }
+.auth-title p { color: #686868; font-size: 14px; margin-bottom: 30px; }
+.auth-form { display: flex; flex-direction: column; gap: 9px; }
+.auth-form label,.auth-label-line label { font-size: 12px; font-weight: 750; margin: 0; }
+.auth-form input { height: 52px; width: 100%; border: 1px solid #d6d6d6 !important; border-radius: 9px; padding: 13px 15px; background: #fff; color: #171717; font-size: 14px; }
+.auth-form > input[type='email'] { margin-bottom: 18px; }
+.auth-label-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.auth-label-line a { font-size: 12px; color: #5a5a5a; }
+.auth-password { position: relative; }
+.auth-password input { padding-right: 75px; }
+.auth-password button { position: absolute; right: 8px; top: 6px; bottom: 6px; border: 0; background: transparent; color: #4c4c4c; padding: 0 13px; font-size: 12px; font-weight: 750; }
+.auth-submit { display: flex; align-items: center; justify-content: space-between; padding: 0 18px; width: 100%; margin-top: 18px; min-height: 53px; color: #fff; background: #111; border: 1px solid #111; border-radius: 9px; font-weight: 750; }
+.auth-submit:hover { background: #343434; }
+.auth-submit span { font-size: 20px; }
+.auth-register { border-top: 1px solid #e5e5e5; margin-top: 34px; padding-top: 24px; font-size: 13px; }
+.auth-register p { color: #747474; margin: 0 0 6px; }
+.auth-register a { font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
+.auth-alert { border: 1px solid #c6c6c6; background: #f1f1f1; padding: 12px 14px; margin: 0 0 22px; border-radius: 9px; color: #202020; font-size: 13px; }
+.auth-alert-neutral { background: #f7f7f7; }
+.auth-panel-foot { font-size: 11px; color: #888; }
+@media(max-width: 940px) { .auth-shell { grid-template-columns: minmax(260px,.72fr) minmax(360px,1.28fr); } .auth-story h2 { font-size: 49px; } }
+@media(max-width: 720px) { .auth-shell { grid-template-columns: 1fr; min-height: 100vh; } .auth-intro { padding: 19px 23px; min-height: 91px; } .auth-intro::after,.auth-story,.auth-footnote { display: none; } .auth-panel { padding: 22px 23px 30px; min-height: calc(100vh - 91px); } .auth-form-wrap { padding: 35px 0; } }
+@media(max-width: 380px) { .auth-panel { padding: 20px 17px; } .auth-title h1 { font-size: 40px; } }
+
+
+/* Hide Edge's default password eye icon */
+.auth-password input[type="password"]::-ms-reveal,
+.auth-password input[type="password"]::-ms-clear {
+    display: none !important;
+}
+
+/* Fix custom Show/Hide button alignment */
+.auth-password input {
+    padding-right: 85px !important;
+}
+
+.auth-password button {
+    cursor: pointer;
+    white-space: nowrap;
+    z-index: 2;
+}
