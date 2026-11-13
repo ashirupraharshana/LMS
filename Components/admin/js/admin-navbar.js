@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Close after selecting a navigation link on mobile
-    document.querySelectorAll('.sidebar .nav-link').forEach((link) => {
+    document.querySelectorAll('.sidebar a.nav-link').forEach((link) => {
         link.addEventListener('click', () => {
             if (window.matchMedia('(max-width: 760px)').matches) {
                 closeMenu();

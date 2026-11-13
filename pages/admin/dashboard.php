@@ -44,6 +44,7 @@ $stats = [
     'total_students' => 0,
     'active_students' => 0,
     'pending_students' => 0,
+    'pending_applications' => 0,
     'inactive_students' => 0,
     'total_admins' => 0,
 ];
@@ -78,11 +79,16 @@ try {
     );
     $recentStudents = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    $stats['pending_applications'] = (int) $pdo
+        ->query("SELECT COUNT(*) FROM course_applications WHERE status = 'pending'")
+        ->fetchColumn();
+
     $pendingStmt = $pdo->query(
-        "SELECT id, full_name, email, created_at
-         FROM users
-         WHERE role = 'student' AND status = 'pending'
-         ORDER BY created_at ASC, id ASC
+        "SELECT a.id, a.full_name, a.email, a.created_at, c.title AS course_title
+         FROM course_applications a
+         LEFT JOIN courses c ON c.id = a.course_id
+         WHERE a.status = 'pending'
+         ORDER BY a.created_at ASC, a.id ASC
          LIMIT 6"
     );
     $pendingStudents = $pendingStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -101,6 +107,16 @@ function formatDate(mixed $value): string
     } catch (Throwable) {
         return '—';
     }
+}
+
+function adminDashboardInitial(string $name): string
+{
+    $initial = function_exists('mb_substr')
+        ? mb_substr($name, 0, 1, 'UTF-8')
+        : substr($name, 0, 1);
+    return function_exists('mb_strtoupper')
+        ? mb_strtoupper($initial, 'UTF-8')
+        : strtoupper($initial);
 }
 
 function statusClass(string $status): string
@@ -123,11 +139,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#382720">
+    <meta name="theme-color" content="#111111">
     <title>Admin Dashboard | Student Management System</title>
     <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="../../Components/admin/style/navbar.css">
 <link rel="stylesheet" href="../../public/css/theme.css">
+    <link rel="stylesheet" href="../../Components/admin/style/admin-mono.css">
 </head>
 <body>
 <div class="app">
@@ -163,22 +180,22 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <?php endif; ?>
 
             <section class="stats-grid" aria-label="Student statistics">
-                <article class="stat-card" style="--orb:#ecefff;--icon:#9a0002;--icon-bg:#eef0ff">
+                <article class="stat-card">
                     <div class="stat-top"><span class="stat-label">Total students</span><span class="stat-icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span></div>
                     <div class="stat-number"><?= number_format((int) $stats['total_students']) ?></div>
                     <div class="stat-foot">Registered student accounts</div>
                 </article>
-                <article class="stat-card" style="--orb:#e1f7eb;--icon:#13865b;--icon-bg:#eaf8f0">
+                <article class="stat-card">
                     <div class="stat-top"><span class="stat-label">Active students</span><span class="stat-icon"><i class="fa-solid fa-user-check" aria-hidden="true"></i></span></div>
                     <div class="stat-number"><?= number_format((int) $stats['active_students']) ?></div>
                     <div class="stat-foot"><strong>Active</strong> and able to log in</div>
                 </article>
-                <article class="stat-card" style="--orb:#fff0d7;--icon:#a7670a;--icon-bg:#fff5e4">
-                    <div class="stat-top"><span class="stat-label">Pending approval</span><span class="stat-icon"><i class="fa-regular fa-hourglass-half" aria-hidden="true"></i></span></div>
-                    <div class="stat-number"><?= number_format((int) $stats['pending_students']) ?></div>
-                    <div class="stat-foot"><strong>Needs review</strong> by an administrator</div>
+                <article class="stat-card">
+                    <div class="stat-top"><span class="stat-label">Pending applications</span><span class="stat-icon"><i class="fa-regular fa-hourglass-half" aria-hidden="true"></i></span></div>
+                    <div class="stat-number"><?= number_format((int) $stats['pending_applications']) ?></div>
+                    <div class="stat-foot">Course applications awaiting review</div>
                 </article>
-                <article class="stat-card" style="--orb:#ffe7eb;--icon:#bd3a4b;--icon-bg:#fff0f1">
+                <article class="stat-card">
                     <div class="stat-top"><span class="stat-label">Inactive students</span><span class="stat-icon"><i class="fa-solid fa-user-slash" aria-hidden="true"></i></span></div>
                     <div class="stat-number"><?= number_format((int) $stats['inactive_students']) ?></div>
                     <div class="stat-foot">Currently inactive accounts</div>
@@ -199,7 +216,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                                 <?php foreach ($recentStudents as $student): ?>
                                     <?php $studentName = (string) ($student['full_name'] ?? 'Student'); ?>
                                     <tr>
-                                        <td><div class="student-cell"><span class="student-avatar"><?= escapeOutput(mb_strtoupper(mb_substr($studentName, 0, 1, 'UTF-8'), 'UTF-8')) ?></span><span class="student-info"><strong><?= escapeOutput($studentName) ?></strong><span><?= escapeOutput($student['email'] ?? '') ?></span></span></div></td>
+                                        <td><div class="student-cell"><span class="student-avatar"><?= escapeOutput(adminDashboardInitial($studentName)) ?></span><span class="student-info"><strong><?= escapeOutput($studentName) ?></strong><span><?= escapeOutput($student['email'] ?? '') ?></span></span></div></td>
                                         <td><span class="status <?= escapeOutput(statusClass((string) ($student['status'] ?? ''))) ?>"><?= escapeOutput($student['status'] ?? 'unknown') ?></span></td>
                                         <td><?= escapeOutput(formatDate($student['created_at'] ?? null)) ?></td>
                                     </tr>
@@ -216,28 +233,28 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <div>
                     <section class="panel" id="pending" aria-labelledby="pendingTitle">
                         <div class="panel-header">
-                            <div><h2 class="panel-title" id="pendingTitle">Pending approvals</h2><p class="panel-subtitle">Students waiting for account activation</p></div>
-                            <span class="panel-count"><?= (int) $stats['pending_students'] ?></span>
+                            <div><h2 class="panel-title" id="pendingTitle">Pending course applications</h2><p class="panel-subtitle">Applications waiting for your decision</p></div>
+                            <span class="panel-count"><?= (int) $stats['pending_applications'] ?></span>
                         </div>
                         <?php if ($pendingStudents): ?>
                             <div class="pending-list">
                                 <?php foreach ($pendingStudents as $student): ?>
                                     <div class="pending-item">
-                                        <span class="student-avatar"><?= escapeOutput(mb_strtoupper(mb_substr((string) ($student['full_name'] ?? 'S'), 0, 1, 'UTF-8'), 'UTF-8')) ?></span>
-                                        <span class="pending-person"><strong><?= escapeOutput($student['full_name'] ?? 'Student') ?></strong><span><?= escapeOutput($student['email'] ?? '') ?></span></span>
+                                        <span class="student-avatar"><?= escapeOutput(adminDashboardInitial((string) ($student['full_name'] ?? 'S'))) ?></span>
+                                        <span class="pending-person"><strong><?= escapeOutput($student['full_name'] ?? 'Student') ?></strong><span><?= escapeOutput($student['course_title'] ?? 'Course') ?></span></span>
                                         <span class="pending-date"><?= escapeOutput(formatDate($student['created_at'] ?? null)) ?></span>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
-                            <div class="panel-footer">To approve an account, change its status to <strong>active</strong> in <a href="manage_students.php?status=pending">Manage all students</a>.</div>
+                            <div class="panel-footer"><a href="student_applications.php?status=pending">Review pending applications</a> to approve or decline requests.</div>
                         <?php else: ?>
-                            <div class="empty-state"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>No pending student accounts. You’re all caught up.</div>
+                            <div class="empty-state"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>No pending course applications. You’re all caught up.</div>
                         <?php endif; ?>
                     </section>
 
                     <aside class="quick-card">
-                        <div class="quick-card-top"><span class="quick-icon"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i></span><h3>Administrator tip</h3></div>
-                        <p>New registrations are created with <strong>pending</strong> status. Review each student before activating their account.</p>
+                        <div class="quick-card-top"><span class="quick-icon"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i></span><h3>Application review</h3></div>
+                        <p>Applications are counted as pending until you approve or decline them. <a href="student_applications.php?status=pending">Open applications</a>.</p>
                     </aside>
                 </div>
             </div>

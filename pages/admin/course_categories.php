@@ -355,7 +355,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#382720">
+    <meta name="theme-color" content="#111111">
     <title>Course Categories | Student Management System</title>
     <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="../../Components/admin/style/navbar.css">
@@ -1032,6 +1032,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
     </style>
 <link rel="stylesheet" href="../../public/css/theme.css">
+    <link rel="stylesheet" href="../../Components/admin/style/admin-mono.css">
 </head>
 
 <body>

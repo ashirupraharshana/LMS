@@ -368,7 +368,7 @@ if ($formError !== '') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#382720">
+    <meta name="theme-color" content="#111111">
     <title>Manage Courses | Student Management System</title>
     <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="../../Components/admin/style/navbar.css">
@@ -440,6 +440,7 @@ if ($formError !== '') {
         @media(max-width:620px){.course-content{padding:20px 13px}.course-welcome{flex-direction:column}.course-date{align-self:flex-start}.course-stats{gap:10px}.course-stat{padding:15px}.course-stat-number{font-size:25px}.course-panel-header,.course-panel-body{padding:17px 15px}.course-form-grid{grid-template-columns:1fr;gap:15px}.course-field.full{grid-column:auto}.course-search{flex-wrap:wrap}.course-search-wrap{flex-basis:100%}.course-search .course-btn{flex:1}}
     </style>
 <link rel="stylesheet" href="../../public/css/theme.css">
+    <link rel="stylesheet" href="../../Components/admin/style/admin-mono.css">
 </head>
 <body>
 <div class="app">
