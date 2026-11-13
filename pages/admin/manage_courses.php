@@ -1,5 +1,7 @@
 <?php
 declare(strict_types=1);
+$requiredRole = 'admin';
+require_once __DIR__ . '/../../config/auth.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -76,7 +78,7 @@ if ($adminName === '') {
 $firstName = preg_split('/\s+/', $adminName)[0] ?? 'Administrator';
 $currentPage = basename($_SERVER['PHP_SELF']);
 
-$pdo = null;
+
 $pageError = '';
 $formError = '';
 $searchTerm = trim((string) ($_GET['q'] ?? ''));
@@ -97,6 +99,7 @@ $formValues = [
     'description' => '',
     'category_id' => '',
     'status' => 'draft',
+    'seat_capacity' => '30',
 ];
 
 $flash = $_SESSION['manage_courses_flash'] ?? null;
@@ -143,6 +146,7 @@ if ($isPost) {
             'description' => trim((string) ($_POST['description'] ?? '')),
             'category_id' => trim((string) ($_POST['category_id'] ?? '')),
             'status' => (string) ($_POST['status'] ?? 'draft'),
+            'seat_capacity' => trim((string) ($_POST['seat_capacity'] ?? '')),
         ];
         $formAction = $postAction;
         $showEditForm = $postAction === 'update';
@@ -160,6 +164,7 @@ if ($isPost) {
                 $title = $formValues['title'];
                 $description = $formValues['description'];
                 $status = $formValues['status'];
+                $seatCapacity = filter_var($formValues['seat_capacity'], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1,'max_range'=>100000]]);
 
                 if ($postAction === 'update' && $id === false) {
                     $formError = 'The course ID is invalid. Please select the course again.';
@@ -169,6 +174,8 @@ if ($isPost) {
                     $formError = 'The course title cannot exceed 150 characters.';
                 } elseif (courseStringLength($description) > 5000) {
                     $formError = 'The description cannot exceed 5,000 characters.';
+                } elseif ($seatCapacity === false) {
+                    $formError = 'Enter a seat capacity between 1 and 100,000.';
                 } elseif ($categoryId === false) {
                     $formError = 'Please select a course category.';
                 } elseif (!in_array($status, ['draft', 'published', 'archived'], true)) {
@@ -183,38 +190,40 @@ if ($isPost) {
 
                         if ($postAction === 'add') {
                             $stmt = $pdo->prepare(
-                                'INSERT INTO courses (title, description, category_id, status)
-                                 VALUES (:title, :description, :category_id, :status)'
+                                'INSERT INTO courses (title, description, category_id, status, seat_capacity)
+                                 VALUES (:title, :description, :category_id, :status, :seat_capacity)'
                             );
                             $stmt->execute([
                                 ':title' => $title,
                                 ':description' => $descriptionValue,
                                 ':category_id' => $categoryId,
                                 ':status' => $status,
+                                ':seat_capacity' => $seatCapacity,
                             ]);
                             setCourseFlash('success', 'Course added successfully.');
                         } else {
-                            $stmt = $pdo->prepare(
-                                'UPDATE courses
-                                 SET title = :title,
-                                     description = :description,
-                                     category_id = :category_id,
-                                     status = :status
-                                 WHERE id = :id'
-                            );
-                            $stmt->execute([
-                                ':title' => $title,
-                                ':description' => $descriptionValue,
-                                ':category_id' => $categoryId,
-                                ':status' => $status,
-                                ':id' => $id,
-                            ]);
-
-                            if ($stmt->rowCount() === 0) {
-                                $checkStmt = $pdo->prepare('SELECT id FROM courses WHERE id = :id');
-                                $checkStmt->execute([':id' => $id]);
-                                if (!$checkStmt->fetchColumn()) {
-                                    $formError = 'This course no longer exists. Refresh the list and try again.';
+                            // Lock the course before checking occupancy so the limit cannot
+                            // be lowered while an application is being approved.
+                            $pdo->beginTransaction();
+                            $lock = $pdo->prepare('SELECT id FROM courses WHERE id = :id FOR UPDATE');
+                            $lock->execute([':id'=>$id]);
+                            if (!$lock->fetchColumn()) {
+                                $pdo->rollBack();
+                                $formError = 'This course no longer exists.';
+                            } else {
+                                $approvedStmt = $pdo->prepare("SELECT COUNT(*) FROM course_applications WHERE course_id = :id AND status = 'approved'");
+                                $approvedStmt->execute([':id'=>$id]);
+                                $occupied = (int)$approvedStmt->fetchColumn();
+                                if ($seatCapacity < $occupied) {
+                                    $pdo->rollBack();
+                                    $formError = "Capacity cannot be less than {$occupied} approved applications.";
+                                } else {
+                                    $stmt = $pdo->prepare('UPDATE courses SET title = :title, description = :description, category_id = :category_id, status = :status, seat_capacity = :seat_capacity WHERE id = :id');
+                                    $stmt->execute([
+                                        ':title'=>$title, ':description'=>$descriptionValue, ':category_id'=>$categoryId,
+                                        ':status'=>$status, ':seat_capacity'=>$seatCapacity, ':id'=>$id,
+                                    ]);
+                                    $pdo->commit();
                                 }
                             }
 
@@ -247,14 +256,16 @@ if ($isPost) {
                 $formError = 'Invalid request. Please try again.';
             }
         } catch (PDOException $e) {
+            if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
             error_log('Manage course operation error: ' . $e->getMessage());
             $sqlState = (string) ($e->errorInfo[0] ?? '');
             if ($postAction === 'delete' && $sqlState === '23000') {
-                $formError = 'This course cannot be deleted because it may be linked to enrolments or other course records.';
+                $formError = 'This course has application history and cannot be deleted. Set its status to Archived instead.';
             } else {
                 $formError = 'The operation could not be completed. Check the course details and try again.';
             }
         } catch (Throwable $e) {
+            if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
             error_log('Manage course operation error: ' . $e->getMessage());
             $formError = 'An unexpected error occurred. Please try again.';
         }
@@ -267,7 +278,7 @@ if (!$isPost && isset($_GET['edit'])) {
         $formError = 'The selected course ID is invalid.';
     } elseif ($pdo instanceof PDO) {
         try {
-            $stmt = $pdo->prepare('SELECT id, title, description, category_id, status FROM courses WHERE id = :id');
+            $stmt = $pdo->prepare('SELECT id, title, description, category_id, status, seat_capacity FROM courses WHERE id = :id');
             $stmt->execute([':id' => $editId]);
             $editCourse = $stmt->fetch() ?: null;
 
@@ -278,6 +289,7 @@ if (!$isPost && isset($_GET['edit'])) {
                     'description' => (string) ($editCourse['description'] ?? ''),
                     'category_id' => (string) $editCourse['category_id'],
                     'status' => (string) $editCourse['status'],
+                    'seat_capacity' => (string) $editCourse['seat_capacity'],
                 ];
                 $formAction = 'update';
                 $showEditForm = true;
@@ -305,7 +317,8 @@ if ($pdo instanceof PDO) {
 
         if ($searchTerm !== '') {
             $stmt = $pdo->prepare(
-                'SELECT c.id, c.title, c.description, c.category_id, c.status, c.created_at, c.updated_at,
+                'SELECT c.id, c.title, c.description, c.category_id, c.status, c.seat_capacity, c.created_at, c.updated_at,
+                        (SELECT COUNT(*) FROM course_applications a WHERE a.course_id=c.id AND a.status=\'approved\') AS occupied_seats,
                         cc.name AS category_name, cc.status AS category_status
                  FROM courses c
                  INNER JOIN course_categories cc ON cc.id = c.category_id
@@ -321,7 +334,8 @@ if ($pdo instanceof PDO) {
             $stmt->execute();
         } else {
             $stmt = $pdo->query(
-                'SELECT c.id, c.title, c.description, c.category_id, c.status, c.created_at, c.updated_at,
+                'SELECT c.id, c.title, c.description, c.category_id, c.status, c.seat_capacity, c.created_at, c.updated_at,
+                        (SELECT COUNT(*) FROM course_applications a WHERE a.course_id=c.id AND a.status=\'approved\') AS occupied_seats,
                         cc.name AS category_name, cc.status AS category_status
                  FROM courses c
                  INNER JOIN course_categories cc ON cc.id = c.category_id
@@ -354,19 +368,19 @@ if ($formError !== '') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#111111">
     <title>Manage Courses | Student Management System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="../../Components/admin/style/navbar.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../../public/vendor/sweetalert2.all.min.js"></script>
     <style>
         /* SweetAlert2 premium styling — matched to course_categories.php */
         .login-swal-popup {
-            border: 1px solid #e7eaf2 !important;
+            border: 1px solid #eaeaea !important;
             border-radius: 22px !important;
             padding: 30px 24px !important;
             font-family: Inter, "Segoe UI", sans-serif !important;
-            box-shadow: 0 24px 70px rgba(23, 32, 51, 0.16) !important;
+            box-shadow: 0 24px 70px rgba(31,31,31,0.16) !important;
         }
 
         .login-swal-confirm {
@@ -374,57 +388,59 @@ if ($formError !== '') {
             padding: 12px 22px !important;
             border: 0 !important;
             border-radius: 10px !important;
-            background: #4f46e5 !important;
-            color: #fff !important;
+            background: #212121 !important;
+            color: #ffffff !important;
             font-size: 13px !important;
             font-weight: 700 !important;
-            box-shadow: 0 5px 14px rgba(80, 101, 233, 0.2) !important;
+            box-shadow: 0 5px 14px rgba(106,106,106,0.2) !important;
         }
 
         .login-swal-confirm:focus {
-            box-shadow: 0 0 0 4px rgba(80, 101, 233, 0.18) !important;
+            box-shadow: 0 0 0 4px rgba(106,106,106,0.18) !important;
         }
 
         .login-swal-cancel {
             min-width: 110px !important;
             padding: 12px 22px !important;
-            border: 1px solid #e5e7eb !important;
+            border: 1px solid #e7e7e7 !important;
             border-radius: 10px !important;
-            background: #fff !important;
-            color: #374151 !important;
+            background: #ffffff !important;
+            color: #2a2a2a !important;
             font-size: 13px !important;
             font-weight: 700 !important;
         }
 
-        :root{--mc-primary:#4f46e5;--mc-primary-dark:#3730a3;--mc-text:#172033;--mc-muted:#6b7280;--mc-border:#e5e7eb;--mc-card:#fff}
+        :root{--mc-primary:#212121;--mc-primary-dark:#212121;--mc-text:#2a2a2a;--mc-muted:#212121;--mc-border:#e7e7e7;--mc-card:#ffffff}
         .course-content{width:100%;max-width:1500px;margin:0 auto;padding:28px clamp(16px,2.5vw,36px);color:var(--mc-text)}
         .course-welcome{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:25px}
         .course-eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--mc-primary);font-size:11px;font-weight:800;letter-spacing:.12em}
-        .course-welcome h1{margin:0;color:#111827;font-size:clamp(25px,3vw,32px);line-height:1.2;letter-spacing:-.035em}
+        .course-welcome h1{margin:0;color:#2a2a2a;font-size:clamp(25px,3vw,32px);line-height:1.2;letter-spacing:-.035em}
         .course-welcome p{margin:9px 0 0;color:var(--mc-muted);font-size:14px;line-height:1.6}
-        .course-date{flex-shrink:0;display:inline-flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid var(--mc-border);border-radius:12px;background:#fff;color:#4b5563;font-size:12px;font-weight:600}
+        .course-date{flex-shrink:0;display:inline-flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid var(--mc-border);border-radius:12px;background:#ffffff;color:#212121;font-size:12px;font-weight:600}
         .course-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:22px}
-        .course-stat{padding:18px 19px;border:1px solid #edf0f5;border-radius:16px;background:#fff;box-shadow:0 4px 18px rgba(15,23,42,.035)}
-        .course-stat-label{color:var(--mc-muted);font-size:12px;font-weight:700}.course-stat-number{margin-top:10px;color:#111827;font-size:29px;font-weight:800;letter-spacing:-.04em}.course-stat-foot{margin-top:4px;color:#8a93a3;font-size:11px}
-        .course-panel{min-width:0;margin-bottom:22px;overflow:hidden;border:1px solid #e9ecf2;border-radius:16px;background:#fff;box-shadow:0 5px 20px rgba(15,23,42,.035)}
-        .course-panel-header{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px 22px;border-bottom:1px solid #edf0f4}
-        .course-panel-header h2{margin:0;color:#1f2937;font-size:16px;font-weight:800}.course-panel-header p{margin:5px 0 0;color:var(--mc-muted);font-size:12px;line-height:1.5}.course-panel-body{padding:22px}
+        .course-stat{padding:18px 19px;border:1px solid #f0f0f0;border-radius:16px;background:#ffffff;box-shadow:0 4px 18px rgba(23,23,23,.035)}
+        .course-stat-label{color:var(--mc-muted);font-size:12px;font-weight:700}.course-stat-number{margin-top:10px;color:#2a2a2a;font-size:29px;font-weight:800;letter-spacing:-.04em}.course-stat-foot{margin-top:4px;color:#212121;font-size:11px}
+        .course-panel{min-width:0;margin-bottom:22px;overflow:hidden;border:1px solid #ececec;border-radius:16px;background:#ffffff;box-shadow:0 5px 20px rgba(23,23,23,.035)}
+        .course-panel-header{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px 22px;border-bottom:1px solid #f0f0f0}
+        .course-panel-header h2{margin:0;color:#2a2a2a;font-size:16px;font-weight:800}.course-panel-header p{margin:5px 0 0;color:var(--mc-muted);font-size:12px;line-height:1.5}.course-panel-body{padding:22px}
         .course-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px}.course-field{display:flex;flex-direction:column;gap:7px;min-width:0}.course-field.full{grid-column:1/-1}
-        .course-field label{color:#374151;font-size:12px;font-weight:700}.course-field .required{color:#dc2626}
-        .course-field input,.course-field select,.course-field textarea{width:100%;min-height:43px;padding:11px 12px;border:1px solid #dfe3eb;border-radius:10px;outline:none;background:#fff;color:#1f2937;font:inherit;font-size:13px;transition:border-color .18s ease,box-shadow .18s ease}
-        .course-field textarea{min-height:100px;resize:vertical}.course-field input:focus,.course-field select:focus,.course-field textarea:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(99,102,241,.12)}.course-help{color:#8a93a3;font-size:11px}
+        .course-field label{color:#2a2a2a;font-size:12px;font-weight:700}.course-field .required{color:#4d4d4d}
+        .course-field input,.course-field select,.course-field textarea{width:100%;min-height:43px;padding:11px 12px;border:1px solid #e3e3e3;border-radius:10px;outline:none;background:#ffffff;color:#2a2a2a;font:inherit;font-size:13px;transition:border-color .18s ease,box-shadow .18s ease}
+        .course-field textarea{min-height:100px;resize:vertical}.course-field input:focus,.course-field select:focus,.course-field textarea:focus{border-color:#212121;box-shadow:0 0 0 3px rgba(111,111,111,.12)}.course-help{color:#212121;font-size:11px}
         .course-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:20px}
         .course-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:10px 15px;border:1px solid transparent;border-radius:10px;cursor:pointer;text-decoration:none;font:inherit;font-size:12px;font-weight:750;transition:background .18s ease,transform .18s ease}.course-btn:hover{transform:translateY(-1px)}
-        .course-btn-primary{background:var(--mc-primary);color:#fff}.course-btn-primary:hover{background:var(--mc-primary-dark)}.course-btn-light{border-color:#dfe3eb;background:#fff;color:#4b5563}.course-btn-light:hover{background:#f8fafc}
-        .course-search{display:flex;width:min(100%,490px);align-items:center;gap:8px}.course-search-wrap{position:relative;flex:1;min-width:100px}.course-search-wrap i{position:absolute;top:50%;left:13px;transform:translateY(-50%);color:#9ca3af;font-size:13px}.course-search input{width:100%;height:40px;padding:9px 12px 9px 36px;border:1px solid #e0e4eb;border-radius:10px;outline:none;background:#fff;color:#1f2937;font:inherit;font-size:12px}
-        .course-table-wrap{width:100%;overflow-x:auto}.course-table{width:100%;border-collapse:collapse;text-align:left}.course-table th{padding:13px 16px;border-bottom:1px solid #e9edf3;background:#fafbfe;color:#8a93a3;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}.course-table td{padding:15px 16px;border-bottom:1px solid #f0f2f6;color:#4b5563;font-size:12px;vertical-align:middle}.course-table tbody tr:last-child td{border-bottom:0}.course-table tbody tr:hover{background:#fcfcff}
-        .course-title-cell{display:flex;align-items:center;gap:11px;min-width:180px}.course-title-icon{display:grid;flex:0 0 auto;place-items:center;width:36px;height:36px;border-radius:11px;background:#eef2ff;color:#4f46e5}.course-title-text strong{display:block;max-width:260px;overflow-wrap:anywhere;color:#1f2937;font-size:12px;font-weight:800}.course-title-text span{display:block;margin-top:4px;color:#9ca3af;font-size:10px}.course-description{display:block;max-width:320px;overflow-wrap:anywhere;color:#6b7280;line-height:1.5}
-        .course-status{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:capitalize;white-space:nowrap}.course-status:before{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;content:''}.course-status-published{background:#ecfdf3;color:#15803d}.course-status-draft{background:#fffbeb;color:#a16207}.course-status-archived{background:#f3f4f6;color:#6b7280}
-        .course-row-actions{display:flex;align-items:center;gap:6px;white-space:nowrap}.course-icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border:1px solid #e8ebf1;border-radius:9px;background:#fff;color:#6b7280;text-decoration:none;cursor:pointer}.course-icon-btn:hover{border-color:#c7d2fe;background:#eef2ff;color:#4338ca}.course-icon-btn.delete:hover{border-color:#fecaca;background:#fef2f2;color:#b91c1c}.course-inline-form{display:inline-flex;margin:0}
-        .course-empty{padding:42px 20px;text-align:center;color:#9ca3af}.course-empty i{display:block;margin-bottom:12px;color:#c7cdd8;font-size:28px}.course-empty strong{display:block;margin-bottom:6px;color:#4b5563;font-size:13px}.course-empty span{font-size:12px}.course-panel-footer{padding:13px 20px;border-top:1px solid #edf0f4;color:#9ca3af;font-size:11px}.course-footer{padding:12px 0 2px;color:#9ca3af;font-size:11px;text-align:center}
+        .course-btn-primary{background:var(--mc-primary);color:#ffffff}.course-btn-primary:hover{background:var(--mc-primary-dark)}.course-btn-light{border-color:#e3e3e3;background:#ffffff;color:#212121}.course-btn-light:hover{background:#fafafa}
+        .course-search{display:flex;width:min(100%,490px);align-items:center;gap:8px}.course-search-wrap{position:relative;flex:1;min-width:100px}.course-search-wrap i{position:absolute;top:50%;left:13px;transform:translateY(-50%);color:#212121;font-size:13px}.course-search input{width:100%;height:40px;padding:9px 12px 9px 36px;border:1px solid #e4e4e4;border-radius:10px;outline:none;background:#ffffff;color:#2a2a2a;font:inherit;font-size:12px}
+        .course-table-wrap{width:100%;overflow-x:auto}.course-table{width:100%;border-collapse:collapse;text-align:left}.course-table th{padding:13px 16px;border-bottom:1px solid #ededed;background:#fbfbfb;color:#212121;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}.course-table td{padding:15px 16px;border-bottom:1px solid #f2f2f2;color:#212121;font-size:12px;vertical-align:middle}.course-table tbody tr:last-child td{border-bottom:0}.course-table tbody tr:hover{background:#fcfcfc}
+        .course-title-cell{display:flex;align-items:center;gap:11px;min-width:180px}.course-title-icon{display:grid;flex:0 0 auto;place-items:center;width:36px;height:36px;border-radius:11px;background:#f2f2f2;color:#212121}.course-title-text strong{display:block;max-width:260px;overflow-wrap:anywhere;color:#2a2a2a;font-size:12px;font-weight:800}.course-title-text span{display:block;margin-top:4px;color:#212121;font-size:10px}.course-description{display:block;max-width:320px;overflow-wrap:anywhere;color:#212121;line-height:1.5}
+        .course-status{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:20px;font-size:10px;font-weight:800;text-transform:capitalize;white-space:nowrap}.course-status:before{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;content:''}.course-status-published{background:#f9f9f9;color:#646464}.course-status-draft{background:#fbfbfb;color:#696969}.course-status-archived{background:#f4f4f4;color:#212121}
+        .course-row-actions{display:flex;align-items:center;gap:6px;white-space:nowrap}.course-icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border:1px solid #ebebeb;border-radius:9px;background:#ffffff;color:#212121;text-decoration:none;cursor:pointer}.course-icon-btn:hover{border-color:#c1c1c1;background:#f2f2f2;color:#212121}.course-icon-btn.delete:hover{border-color:#d5d5d5;background:#f5f5f5;color:#3d3d3d}.course-inline-form{display:inline-flex;margin:0}
+        .course-empty{padding:42px 20px;text-align:center;color:#212121}.course-empty i{display:block;margin-bottom:12px;color:#cdcdcd;font-size:28px}.course-empty strong{display:block;margin-bottom:6px;color:#212121;font-size:13px}.course-empty span{font-size:12px}.course-panel-footer{padding:13px 20px;border-top:1px solid #f0f0f0;color:#212121;font-size:11px}.course-footer{padding:12px 0 2px;color:#212121;font-size:11px;text-align:center}
         @media(max-width:1000px){.course-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.course-panel-header{align-items:flex-start;flex-direction:column}.course-search{width:100%}}
         @media(max-width:620px){.course-content{padding:20px 13px}.course-welcome{flex-direction:column}.course-date{align-self:flex-start}.course-stats{gap:10px}.course-stat{padding:15px}.course-stat-number{font-size:25px}.course-panel-header,.course-panel-body{padding:17px 15px}.course-form-grid{grid-template-columns:1fr;gap:15px}.course-field.full{grid-column:auto}.course-search{flex-wrap:wrap}.course-search-wrap{flex-basis:100%}.course-search .course-btn{flex:1}}
     </style>
+<link rel="stylesheet" href="../../public/css/theme.css">
+    <link rel="stylesheet" href="../../Components/admin/style/admin-mono.css">
 </head>
 <body>
 <div class="app">
@@ -480,7 +496,7 @@ if ($formError !== '') {
                     <?php if (!$categories): ?>
                         <p class="course-help">No course categories were found. Add a category in Categories before creating a course.</p>
                     <?php endif; ?>
-                    <form id="courseForm" method="post" action="manage_courses.php<?= $searchTerm !== '' ? '?q=' . rawurlencode($searchTerm) : '' ?>" autocomplete="off" novalidate>
+                    <form id="courseForm" method="post" action="manage_courses.php<?= $searchTerm !== '' ? '?q=' . rawurlencode($searchTerm) : '' ?>" autocomplete="off">
                         <input type="hidden" name="csrf_token" value="<?= escapeOutput($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="action" value="<?= escapeOutput($formAction) ?>">
                         <input type="hidden" name="return_q" value="<?= escapeOutput($searchTerm) ?>">
@@ -501,7 +517,12 @@ if ($formError !== '') {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <span class="course-help">Options are loaded from your course_categories database table.</span>
+                                <span class="course-help">Choose the category this course belongs to.</span>
+                            </div>
+                            <div class="course-field">
+                                <label for="courseSeats">Available seats <span class="required">*</span></label>
+                                <input id="courseSeats" name="seat_capacity" type="number" min="1" max="100000" step="1" inputmode="numeric" required value="<?= escapeOutput($formValues['seat_capacity']) ?>">
+                                <span class="course-help">Once approved seats reach this limit, applications close automatically.</span>
                             </div>
                             <div class="course-field full">
                                 <label for="courseDescription">Description</label>
@@ -542,20 +563,21 @@ if ($formError !== '') {
                 <?php if ($courses): ?>
                     <div class="course-table-wrap">
                         <table class="course-table">
-                            <thead><tr><th>ID</th><th>Course</th><th>Category</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Course</th><th>Category</th><th>Seats filled</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
                             <tbody>
                             <?php foreach ($courses as $course): ?>
                                 <tr>
                                     <td>#<?= (int) $course['id'] ?></td>
                                     <td><div class="course-title-cell"><span class="course-title-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span><span class="course-title-text"><strong><?= escapeOutput($course['title']) ?></strong><span>Updated <?= escapeOutput(formatCourseDate($course['updated_at'] ?? null)) ?></span></span></div></td>
                                     <td><?= escapeOutput($course['category_name']) ?><?= ($course['category_status'] ?? '') !== 'active' ? ' (Inactive)' : '' ?></td>
+                                    <td><strong><?= (int)$course['occupied_seats'] ?> / <?= (int)$course['seat_capacity'] ?></strong><?= (int)$course['occupied_seats'] >= (int)$course['seat_capacity'] ? ' · Full' : '' ?></td>
                                     <td><span class="course-status course-status-<?= escapeOutput($course['status']) ?>"><?= escapeOutput($course['status']) ?></span></td>
                                     <td><?= escapeOutput(formatCourseDate($course['created_at'] ?? null)) ?></td>
                                     <td><div class="course-row-actions">
-                                        <a class="course-icon-btn" href="?edit=<?= (int) $course['id'] ?><?= $searchTerm !== '' ? '&amp;q=' . rawurlencode($searchTerm) : '' ?>" title="Edit course" aria-label="Edit <?= escapeOutput($course['title']) ?>"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></a>
+                                        <a class="course-icon-btn" href="?edit=<?= (int) $course['id'] ?><?= $searchTerm !== '' ? '&amp;q=' . rawurlencode($searchTerm) : '' ?>" title="Edit course" aria-label="Edit <?= escapeOutput($course['title']) ?>"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i> Edit</a>
                                         <form class="course-inline-form js-delete-course-form" method="post" action="manage_courses.php<?= $searchTerm !== '' ? '?q=' . rawurlencode($searchTerm) : '' ?>" data-course-title="<?= escapeOutput($course['title']) ?>">
                                             <input type="hidden" name="csrf_token" value="<?= escapeOutput($_SESSION['csrf_token']) ?>"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int) $course['id'] ?>"><input type="hidden" name="return_q" value="<?= escapeOutput($searchTerm) ?>">
-                                            <button class="course-icon-btn delete" type="submit" title="Delete course" aria-label="Delete <?= escapeOutput($course['title']) ?>"><i class="fa-regular fa-trash-can" aria-hidden="true"></i></button>
+                                            <button class="course-icon-btn delete" type="submit" title="Delete course" aria-label="Delete <?= escapeOutput($course['title']) ?>"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Delete</button>
                                         </form>
                                     </div></td>
                                 </tr>

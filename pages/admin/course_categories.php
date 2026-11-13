@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+$requiredRole = 'admin';
+require_once __DIR__ . '/../../config/auth.php';
 
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -77,7 +79,7 @@ if ($adminName === '') {
 }
 $firstName = preg_split('/\s+/', $adminName)[0] ?? 'Administrator';
 
-$pdo = null;
+
 $pageError = '';
 $formError = '';
 $searchTerm = trim((string) ($_GET['q'] ?? ''));
@@ -353,19 +355,19 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#111111">
     <title>Course Categories | Student Management System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="../../public/vendor/fontawesome.css">
     <link rel="stylesheet" href="../../Components/admin/style/navbar.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../../public/vendor/sweetalert2.all.min.js"></script>
     <style>
         /* SweetAlert2 premium styling */
         .login-swal-popup {
-            border: 1px solid #e7eaf2 !important;
+            border: 1px solid #eaeaea !important;
             border-radius: 22px !important;
             padding: 30px 24px !important;
             font-family: Inter, "Segoe UI", sans-serif !important;
-            box-shadow: 0 24px 70px rgba(23, 32, 51, 0.16) !important;
+            box-shadow: 0 24px 70px rgba(31,31,31,0.16) !important;
         }
 
         .login-swal-confirm {
@@ -373,38 +375,38 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             padding: 12px 22px !important;
             border: 0 !important;
             border-radius: 10px !important;
-            background: #4f46e5 !important;
-            color: #fff !important;
+            background: #212121 !important;
+            color: #ffffff !important;
             font-size: 13px !important;
             font-weight: 700 !important;
-            box-shadow: 0 5px 14px rgba(80, 101, 233, 0.2) !important;
+            box-shadow: 0 5px 14px rgba(106,106,106,0.2) !important;
         }
 
         .login-swal-confirm:focus {
-            box-shadow: 0 0 0 4px rgba(80, 101, 233, 0.18) !important;
+            box-shadow: 0 0 0 4px rgba(106,106,106,0.18) !important;
         }
 
         .login-swal-cancel {
             min-width: 110px !important;
             padding: 12px 22px !important;
-            border: 1px solid #e5e7eb !important;
+            border: 1px solid #e7e7e7 !important;
             border-radius: 10px !important;
-            background: #fff !important;
-            color: #374151 !important;
+            background: #ffffff !important;
+            color: #2a2a2a !important;
             font-size: 13px !important;
             font-weight: 700 !important;
         }
 
         :root {
-            --cc-primary: #4f46e5;
-            --cc-primary-dark: #3730a3;
-            --cc-text: #172033;
-            --cc-muted: #6b7280;
-            --cc-border: #e5e7eb;
-            --cc-bg: #f6f7fb;
+            --cc-primary: #212121;
+            --cc-primary-dark: #212121;
+            --cc-text: #2a2a2a;
+            --cc-muted: #212121;
+            --cc-border: #e7e7e7;
+            --cc-bg: #f7f7f7;
             --cc-card: #ffffff;
-            --cc-green: #15803d;
-            --cc-red: #b91c1c;
+            --cc-green: #646464;
+            --cc-red: #3d3d3d;
         }
 
         .category-content {
@@ -436,7 +438,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         .category-welcome-row h1 {
             margin: 0;
-            color: #111827;
+            color: #2a2a2a;
             font-size: clamp(25px, 3vw, 32px);
             line-height: 1.2;
             letter-spacing: -.035em;
@@ -458,7 +460,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             border: 1px solid var(--cc-border);
             border-radius: 12px;
             background: var(--cc-card);
-            color: #4b5563;
+            color: #212121;
             font-size: 12px;
             font-weight: 600;
         }
@@ -474,10 +476,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             position: relative;
             overflow: hidden;
             padding: 19px 20px;
-            border: 1px solid #edf0f5;
+            border: 1px solid #f0f0f0;
             border-radius: 16px;
             background: var(--cc-card);
-            box-shadow: 0 4px 18px rgba(15, 23, 42, .035);
+            box-shadow: 0 4px 18px rgba(23,23,23,.035);
         }
 
         .category-stat-top {
@@ -499,14 +501,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             width: 39px;
             height: 39px;
             border-radius: 12px;
-            color: var(--stat-color, #4f46e5);
-            background: var(--stat-bg, #eef2ff);
+            color: var(--stat-color, #212121);
+            background: var(--stat-bg, #f2f2f2);
             font-size: 15px;
         }
 
         .category-stat-number {
             margin-top: 10px;
-            color: #111827;
+            color: #2a2a2a;
             font-size: 29px;
             font-weight: 800;
             letter-spacing: -.04em;
@@ -514,7 +516,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         .category-stat-foot {
             margin-top: 4px;
-            color: #8a93a3;
+            color: #212121;
             font-size: 11px;
         }
 
@@ -522,10 +524,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             min-width: 0;
             margin-bottom: 22px;
             overflow: hidden;
-            border: 1px solid #e9ecf2;
+            border: 1px solid #ececec;
             border-radius: 16px;
             background: var(--cc-card);
-            box-shadow: 0 5px 20px rgba(15, 23, 42, .035);
+            box-shadow: 0 5px 20px rgba(23,23,23,.035);
         }
 
         .category-panel-header {
@@ -534,12 +536,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             align-items: center;
             gap: 15px;
             padding: 20px 22px;
-            border-bottom: 1px solid #edf0f4;
+            border-bottom: 1px solid #f0f0f0;
         }
 
         .category-panel-header h2 {
             margin: 0;
-            color: #1f2937;
+            color: #2a2a2a;
             font-size: 16px;
             font-weight: 800;
         }
@@ -563,8 +565,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             height: 30px;
             padding: 0 9px;
             border-radius: 9px;
-            background: #eef2ff;
-            color: #4338ca;
+            background: #f2f2f2;
+            color: #212121;
             font-size: 12px;
             font-weight: 800;
         }
@@ -587,13 +589,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
 
         .category-field label {
-            color: #374151;
+            color: #2a2a2a;
             font-size: 12px;
             font-weight: 700;
         }
 
         .category-field label .required {
-            color: #dc2626;
+            color: #4d4d4d;
         }
 
         .category-field input,
@@ -602,11 +604,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             width: 100%;
             min-height: 43px;
             padding: 11px 12px;
-            border: 1px solid #dfe3eb;
+            border: 1px solid #e3e3e3;
             border-radius: 10px;
             outline: none;
-            background: #fff;
-            color: #1f2937;
+            background: #ffffff;
+            color: #2a2a2a;
             font: inherit;
             font-size: 13px;
             transition: border-color .18s ease, box-shadow .18s ease;
@@ -620,12 +622,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         .category-field input:focus,
         .category-field select:focus,
         .category-field textarea:focus {
-            border-color: #818cf8;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
+            border-color: #212121;
+            box-shadow: 0 0 0 3px rgba(111,111,111,.12);
         }
 
         .category-field .field-help {
-            color: #8a93a3;
+            color: #212121;
             font-size: 11px;
         }
 
@@ -660,7 +662,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         .category-btn-primary {
             background: var(--cc-primary);
-            color: #fff;
+            color: #ffffff;
         }
 
         .category-btn-primary:hover {
@@ -668,23 +670,23 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
 
         .category-btn-light {
-            border-color: #dfe3eb;
-            background: #fff;
-            color: #4b5563;
+            border-color: #e3e3e3;
+            background: #ffffff;
+            color: #212121;
         }
 
         .category-btn-light:hover {
-            background: #f8fafc;
+            background: #fafafa;
         }
 
         .category-btn-danger {
-            border-color: #fee2e2;
-            background: #fff;
-            color: #b91c1c;
+            border-color: #e8e8e8;
+            background: #ffffff;
+            color: #3d3d3d;
         }
 
         .category-btn-danger:hover {
-            background: #fef2f2;
+            background: #f5f5f5;
         }
 
         .category-search-form {
@@ -705,7 +707,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             top: 50%;
             left: 13px;
             transform: translateY(-50%);
-            color: #9ca3af;
+            color: #212121;
             font-size: 13px;
         }
 
@@ -713,18 +715,18 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             width: 100%;
             height: 40px;
             padding: 9px 12px 9px 36px;
-            border: 1px solid #e0e4eb;
+            border: 1px solid #e4e4e4;
             border-radius: 10px;
             outline: none;
-            background: #fff;
-            color: #1f2937;
+            background: #ffffff;
+            color: #2a2a2a;
             font: inherit;
             font-size: 12px;
         }
 
         .category-search-input:focus {
-            border-color: #818cf8;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, .10);
+            border-color: #212121;
+            box-shadow: 0 0 0 3px rgba(111,111,111,.10);
         }
 
         .category-table-wrap {
@@ -740,9 +742,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         .category-table th {
             padding: 13px 16px;
-            border-bottom: 1px solid #e9edf3;
-            background: #fafbfe;
-            color: #8a93a3;
+            border-bottom: 1px solid #ededed;
+            background: #fbfbfb;
+            color: #212121;
             font-size: 10px;
             font-weight: 800;
             letter-spacing: .07em;
@@ -752,8 +754,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         .category-table td {
             padding: 15px 16px;
-            border-bottom: 1px solid #f0f2f6;
-            color: #4b5563;
+            border-bottom: 1px solid #f2f2f2;
+            color: #212121;
             font-size: 12px;
             vertical-align: middle;
         }
@@ -763,11 +765,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
 
         .category-table tbody tr:hover {
-            background: #fcfcff;
+            background: #fcfcfc;
         }
 
         .category-id {
-            color: #9ca3af;
+            color: #212121;
             font-size: 11px;
             font-weight: 700;
         }
@@ -786,8 +788,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             width: 36px;
             height: 36px;
             border-radius: 11px;
-            background: #eef2ff;
-            color: #4f46e5;
+            background: #f2f2f2;
+            color: #212121;
         }
 
         .category-name-text {
@@ -797,7 +799,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         .category-name-text strong {
             display: block;
             overflow-wrap: anywhere;
-            color: #1f2937;
+            color: #2a2a2a;
             font-size: 12px;
             font-weight: 800;
         }
@@ -805,14 +807,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         .category-name-text span {
             display: block;
             margin-top: 4px;
-            color: #9ca3af;
+            color: #212121;
             font-size: 10px;
         }
 
         .category-description {
             display: block;
             max-width: 300px;
-            color: #6b7280;
+            color: #212121;
             line-height: 1.5;
             overflow-wrap: anywhere;
         }
@@ -839,13 +841,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
 
         .category-status-active {
-            background: #ecfdf3;
-            color: #15803d;
+            background: #f9f9f9;
+            color: #646464;
         }
 
         .category-status-inactive {
-            background: #f3f4f6;
-            color: #6b7280;
+            background: #f4f4f4;
+            color: #212121;
         }
 
         .category-row-actions {
@@ -860,24 +862,24 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             place-items: center;
             width: 32px;
             height: 32px;
-            border: 1px solid #e8ebf1;
+            border: 1px solid #ebebeb;
             border-radius: 9px;
-            background: #fff;
-            color: #6b7280;
+            background: #ffffff;
+            color: #212121;
             text-decoration: none;
             cursor: pointer;
         }
 
         .category-icon-btn:hover {
-            border-color: #c7d2fe;
-            background: #eef2ff;
-            color: #4338ca;
+            border-color: #c1c1c1;
+            background: #f2f2f2;
+            color: #212121;
         }
 
         .category-icon-btn.delete:hover {
-            border-color: #fecaca;
-            background: #fef2f2;
-            color: #b91c1c;
+            border-color: #d5d5d5;
+            background: #f5f5f5;
+            color: #3d3d3d;
         }
 
         .category-inline-form {
@@ -888,20 +890,20 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         .category-empty-state {
             padding: 42px 20px;
             text-align: center;
-            color: #9ca3af;
+            color: #212121;
         }
 
         .category-empty-state i {
             display: block;
             margin-bottom: 12px;
-            color: #c7cdd8;
+            color: #cdcdcd;
             font-size: 28px;
         }
 
         .category-empty-state strong {
             display: block;
             margin-bottom: 6px;
-            color: #4b5563;
+            color: #212121;
             font-size: 13px;
         }
 
@@ -921,7 +923,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         .category-detail-label {
             margin-bottom: 7px;
-            color: #8a93a3;
+            color: #212121;
             font-size: 10px;
             font-weight: 800;
             letter-spacing: .06em;
@@ -929,7 +931,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         }
 
         .category-detail-value {
-            color: #263244;
+            color: #2a2a2a;
             font-size: 13px;
             font-weight: 650;
             overflow-wrap: anywhere;
@@ -941,14 +943,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         .category-panel-footer {
             padding: 13px 20px;
-            border-top: 1px solid #edf0f4;
-            color: #9ca3af;
+            border-top: 1px solid #f0f0f0;
+            color: #212121;
             font-size: 11px;
         }
 
         .category-footer {
             padding: 12px 0 2px;
-            color: #9ca3af;
+            color: #212121;
             font-size: 11px;
             text-align: center;
         }
@@ -1029,6 +1031,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             }
         }
     </style>
+<link rel="stylesheet" href="../../public/css/theme.css">
+    <link rel="stylesheet" href="../../Components/admin/style/admin-mono.css">
 </head>
 
 <body>
@@ -1081,7 +1085,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
                 <section class="category-stats-grid" aria-label="Category statistics">
                     <article class="category-stat-card">
-                        <div class="category-stat-top"><span class="category-stat-label">Total categories</span><span class="category-stat-icon" style="--stat-color:#4f46e5;--stat-bg:#eef2ff"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span></div>
+                        <div class="category-stat-top"><span class="category-stat-label">Total categories</span><span class="category-stat-icon" style="--stat-color:#9a0002;--stat-bg:#eef2ff"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span></div>
                         <div class="category-stat-number"><?= number_format((int) $stats['total_categories']) ?></div>
                         <div class="category-stat-foot">All course categories in the system</div>
                     </article>
@@ -1174,7 +1178,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                                     <span class="field-help">Inactive categories remain in the database.</span>
                                 </div>
                                 <div class="category-field full-width">
-                                    <label for="categoryDescription">Description <span style="font-weight:500;color:#9ca3af">(optional)</span></label>
+                                    <label for="categoryDescription">Description <span style="font-weight:500;color:#9a0002">(optional)</span></label>
                                     <textarea id="categoryDescription" name="description" maxlength="255" rows="3" placeholder="Briefly describe the courses in this category."><?= escapeOutput($formValues['description']) ?></textarea>
                                     <span class="field-help">Maximum 255 characters.</span>
                                 </div>
@@ -1241,13 +1245,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                                             <td>
                                                 <div class="category-row-actions">
                                                     <a class="category-icon-btn" href="?view=<?= (int) $category['id'] ?><?= $searchTerm !== '' ? '&amp;q=' . rawurlencode($searchTerm) : '' ?>" title="View category" aria-label="View <?= escapeOutput($category['name']) ?>"><i class="fa-regular fa-eye" aria-hidden="true"></i></a>
-                                                    <a class="category-icon-btn" href="?edit=<?= (int) $category['id'] ?><?= $searchTerm !== '' ? '&amp;q=' . rawurlencode($searchTerm) : '' ?>" title="Edit category" aria-label="Edit <?= escapeOutput($category['name']) ?>"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i></a>
+                                                    <a class="category-icon-btn" href="?edit=<?= (int) $category['id'] ?><?= $searchTerm !== '' ? '&amp;q=' . rawurlencode($searchTerm) : '' ?>" title="Edit category" aria-label="Edit <?= escapeOutput($category['name']) ?>"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i> Edit</a>
                                                     <form class="category-inline-form js-delete-category-form" method="post" action="course_categories.php<?= $searchTerm !== '' ? '?q=' . rawurlencode($searchTerm) : '' ?>" data-category-name="<?= escapeOutput($category['name']) ?>">
                                                         <input type="hidden" name="csrf_token" value="<?= escapeOutput($_SESSION['csrf_token']) ?>">
                                                         <input type="hidden" name="action" value="delete">
                                                         <input type="hidden" name="id" value="<?= (int) $category['id'] ?>">
                                                         <input type="hidden" name="return_q" value="<?= escapeOutput($searchTerm) ?>">
-                                                        <button class="category-icon-btn delete" type="submit" title="Delete category" aria-label="Delete <?= escapeOutput($category['name']) ?>"><i class="fa-regular fa-trash-can" aria-hidden="true"></i></button>
+                                                        <button class="category-icon-btn delete" type="submit" title="Delete category" aria-label="Delete <?= escapeOutput($category['name']) ?>"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Delete</button>
                                                     </form>
                                                 </div>
                                             </td>
