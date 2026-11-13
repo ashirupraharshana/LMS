@@ -40,3 +40,21 @@ body.auth-page { background: #eee !important; min-height: 100vh; }
 @media(max-width: 940px) { .auth-shell { grid-template-columns: minmax(260px,.72fr) minmax(360px,1.28fr); } .auth-story h2 { font-size: 49px; } }
 @media(max-width: 720px) { .auth-shell { grid-template-columns: 1fr; min-height: 100vh; } .auth-intro { padding: 19px 23px; min-height: 91px; } .auth-intro::after,.auth-story,.auth-footnote { display: none; } .auth-panel { padding: 22px 23px 30px; min-height: calc(100vh - 91px); } .auth-form-wrap { padding: 35px 0; } }
 @media(max-width: 380px) { .auth-panel { padding: 20px 17px; } .auth-title h1 { font-size: 40px; } }
+
+
+/* Hide Edge's default password eye icon */
+.auth-password input[type="password"]::-ms-reveal,
+.auth-password input[type="password"]::-ms-clear {
+    display: none !important;
+}
+
+/* Fix custom Show/Hide button alignment */
+.auth-password input {
+    padding-right: 85px !important;
+}
+
+.auth-password button {
+    cursor: pointer;
+    white-space: nowrap;
+    z-index: 2;
+}

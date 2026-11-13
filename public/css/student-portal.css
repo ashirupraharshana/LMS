@@ -1,0 +1,109 @@
+/* LMS student-only workspace. All UI rules are scoped to .sp-* to avoid public-page collisions. */
+html { scroll-behavior: smooth; }
+body.student-portal { background: #f7f7f7 !important; color: #151515; font-family: 'Segoe UI', Inter, Arial, sans-serif; }
+.student-portal .sp-main { max-width: 1220px; padding: 36px 28px 64px; margin: 0 auto; }
+.student-portal .sp-kicker { text-transform: uppercase; letter-spacing: .16em; font-size: 10px; font-weight: 850; color: #666; display: inline-flex; gap: 7px; align-items: center; }
+.student-portal .sp-page-heading { margin-bottom: 26px; }
+.student-portal .sp-page-heading h1 { font-size: clamp(32px, 4vw, 49px); line-height: 1.12; margin: 10px 0 8px; letter-spacing: -.055em; }
+.student-portal .sp-page-heading p { margin: 0; max-width: 670px; color: #737373; font-size: 14px; }
+.student-portal .sp-hero { background: #131313; color: white; min-height: 245px; border-radius: 24px; padding: clamp(25px, 4vw, 45px); margin: 0 0 22px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; overflow: hidden; position: relative; isolation: isolate; }
+.student-portal .sp-hero::after { content: ''; position: absolute; width: 330px; height: 330px; right: -110px; top: -120px; border: 1px solid #555; border-radius: 50%; box-shadow: 0 0 0 60px #171717, 0 0 0 61px #3d3d3d, 0 0 0 135px #171717, 0 0 0 136px #303030; z-index: -1; opacity: .6; }
+.student-portal .sp-hero h1 { color: #fff !important; font-size: clamp(32px, 4.5vw, 54px); line-height: 1.06; letter-spacing: -.06em; margin: 15px 0 10px; }
+.student-portal .sp-hero p { color: #b8b8b8; margin: 0; max-width: 510px; font-size: 14px; }
+.student-portal .sp-hero .sp-kicker { color: #b8b8b8; }
+.student-portal .sp-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
+.student-portal .sp-hero .sp-button { background: #fff; color: #141414; border-color: #fff; }
+.student-portal .sp-hero .sp-button:hover { background: #ededed; border-color: #ededed; }
+.student-portal .sp-hero .sp-button.sp-button-outline { background: transparent; color: #fff; border-color: #555; }
+.student-portal .sp-hero .sp-button.sp-button-outline:hover { background: #303030; }
+.student-portal .sp-hero-decoration { flex-shrink: 0; width: 100px; height: 100px; border: 1px solid #777; border-radius: 24px; display: grid; place-items: center; background: #222; font-size: 40px; font-weight: 900; letter-spacing: -.09em; transform: rotate(-9deg); }
+.student-portal .sp-button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid #111; border-radius: 10px; background: #111; color: #fff; text-decoration: none; font-weight: 750; font-size: 13px; padding: 11px 17px; cursor: pointer; line-height: 1.2; transition: background .15s; }
+.student-portal .sp-button:hover { background: #363636; color: #fff; }
+.student-portal .sp-button.sp-button-outline { background: #fff; color: #111; border-color: #ddd; }
+.student-portal .sp-button.sp-button-outline:hover { background: #f0f0f0; color: #111; }
+.student-portal .sp-button:disabled, .student-portal .sp-button.sp-disabled { opacity: .54; cursor: not-allowed; pointer-events: none; background: #ebebeb; color: #666; border-color: #ddd; }
+.student-portal .sp-button.sp-button-sm { min-height: 38px; padding: 9px 12px; font-size: 12px; }
+.student-portal .sp-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; margin-bottom: 26px; }
+.student-portal .sp-stat { background: #fff; border: 1px solid #e7e7e7; border-radius: 16px; min-width: 0; padding: 21px 22px; }
+.student-portal .sp-stat-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.student-portal .sp-stat-label { color: #747474; font-size: 12px; font-weight: 650; }
+.student-portal .sp-stat-symbol { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: #f3f3f3; color: #111; font-size: 16px; font-weight: 750; }
+.student-portal .sp-stat-value { font-size: 38px; font-weight: 850; letter-spacing: -.07em; line-height: 1.1; margin-top: 12px; }
+.student-portal .sp-stat-note { color: #8a8a8a; font-size: 11px; margin-top: 7px; }
+.student-portal .sp-content-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(255px, 1fr); gap: 20px; align-items: start; }
+.student-portal .sp-panel { border: 1px solid #e7e7e7; background: #fff; border-radius: 19px; padding: 25px; min-width: 0; margin: 0 0 20px; }
+.student-portal .sp-panel-head { display: flex; justify-content: space-between; align-items: start; gap: 15px; margin-bottom: 20px; }
+.student-portal .sp-panel-head h2 { font-size: 19px; line-height: 1.2; letter-spacing: -.035em; margin: 0 0 4px; }
+.student-portal .sp-panel-head p { font-size: 12px; color: #818181; margin: 0; }
+.student-portal .sp-section-link { text-decoration: none; font-weight: 750; font-size: 12px; color: #222; white-space: nowrap; border-bottom: 1px solid #222; }
+.student-portal .sp-application-list { list-style: none; padding: 0; margin: 0; }
+.student-portal .sp-application-item { display: flex; align-items: center; gap: 15px; padding: 17px 0; border-bottom: 1px solid #ededed; }
+.student-portal .sp-application-item:first-child { padding-top: 0; }
+.student-portal .sp-application-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.student-portal .sp-course-monogram { width: 46px; height: 46px; border: 1px solid #e4e4e4; background: #f5f5f5; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; font-weight: 850; font-size: 17px; }
+.student-portal .sp-application-copy { flex: 1; min-width: 0; }
+.student-portal .sp-application-copy strong { display: block; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.student-portal .sp-application-copy small { display: block; font-size: 11px; color: #888; margin-top: 4px; }
+.student-portal .sp-status { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; border-radius: 50px; font-size: 11px; line-height: 1.3; padding: 6px 10px; background: #f4f4f4; border: 1px solid #dedede; font-weight: 750; text-transform: capitalize; color: #333; }
+.student-portal .sp-status-approved { background: #161616; border-color: #161616; color: white; }
+.student-portal .sp-status-declined { background: #fff; border-style: dashed; }
+.student-portal .sp-quick-list { display: grid; gap: 10px; }
+.student-portal .sp-quick-link { display: flex; text-decoration: none; align-items: center; gap: 13px; border: 1px solid #e8e8e8; border-radius: 12px; padding: 15px; color: #151515; transition: background .15s; }
+.student-portal .sp-quick-link:hover { background: #f6f6f6; }
+.student-portal .sp-quick-icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; background: #f1f1f1; font-size: 18px; }
+.student-portal .sp-quick-copy { flex: 1; min-width: 0; }
+.student-portal .sp-quick-copy strong { display: block; font-size: 13px; }
+.student-portal .sp-quick-copy small { display: block; font-size: 11px; color: #868686; line-height: 1.5; }
+.student-portal .sp-quick-arrow { font-size: 17px; color: #555; }
+.student-portal .sp-empty { padding: 36px 14px; text-align: center; color: #777; background: #fafafa; border: 1px dashed #dfdfdf; border-radius: 14px; }
+.student-portal .sp-empty-symbol { width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 13px; background: #eee; display: grid; place-items: center; color: #111; font-size: 24px; }
+.student-portal .sp-empty h3 { color: #111; margin: 0 0 6px; font-size: 16px; }
+.student-portal .sp-empty p { margin: 0 0 16px; font-size: 12px; }
+.student-portal .sp-course-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 17px; border-radius: 15px; border: 1px solid #e6e6e6; background: #fff; margin-bottom: 21px; }
+.student-portal .sp-course-search { flex: 1 1 300px; display: flex; gap: 9px; }
+.student-portal .sp-course-search input { flex: 1; min-width: 0; }
+.student-portal .sp-course-count { font-size: 12px; font-weight: 750; color: #666; margin-left: auto; }
+.student-portal .sp-course-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+.student-portal .sp-course-card { min-width: 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 18px; display: flex; flex-direction: column; overflow: hidden; }
+.student-portal .sp-course-cover { padding: 19px; min-height: 115px; display: flex; align-items: flex-start; justify-content: space-between; background: #f1f1f1; border-bottom: 1px solid #e8e8e8; }
+.student-portal .sp-course-cover-num { display: grid; place-items: center; width: 54px; height: 54px; border: 1px solid #dcdcdc; background: #fff; border-radius: 15px; font-size: 22px; font-weight: 850; letter-spacing: -.05em; }
+.student-portal .sp-course-cover-type { font-size: 10px; font-weight: 850; letter-spacing: .1em; padding: 8px 10px; border: 1px solid #dedede; background: white; border-radius: 40px; }
+.student-portal .sp-course-body { padding: 21px; flex: 1; display: flex; flex-direction: column; }
+.student-portal .sp-course-category { text-transform: uppercase; font-weight: 850; color: #868686; font-size: 10px; letter-spacing: .12em; }
+.student-portal .sp-course-title { font-size: 19px; letter-spacing: -.04em; line-height: 1.35; margin: 10px 0 8px; overflow-wrap: anywhere; }
+.student-portal .sp-course-description { color: #777; font-size: 12px; line-height: 1.7; margin: 0 0 20px; min-height: 60px; overflow-wrap: anywhere; }
+.student-portal .sp-seat-info { margin-top: auto; padding-top: 16px; border-top: 1px solid #eee; }
+.student-portal .sp-seat-line { display: flex; gap: 10px; align-items: center; justify-content: space-between; color: #666; font-size: 11px; font-weight: 650; }
+.student-portal .sp-seat-line strong { color: #111; font-weight: 800; }
+.student-portal .sp-meter { overflow: hidden; margin-top: 9px; background: #e9e9e9; height: 6px; border-radius: 20px; }
+.student-portal .sp-meter span { display: block; height: 100%; background: #151515; border-radius: inherit; }
+.student-portal .sp-course-footer { margin-top: 16px; }
+.student-portal .sp-course-footer .sp-button { width: 100%; }
+.student-portal .sp-form { display: grid; gap: 18px; }
+.student-portal .sp-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.student-portal .sp-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.student-portal .sp-field.sp-span-all { grid-column: 1 / -1; }
+.student-portal .sp-field label { font-size: 12px; font-weight: 750; color: #292929; }
+.student-portal .sp-field input, .student-portal .sp-field textarea, .student-portal .sp-course-search input { width: 100%; min-height: 46px; padding: 12px 14px; border: 1px solid #dcdcdc; background: #fff; border-radius: 10px; font-size: 13px; }
+.student-portal .sp-field textarea { min-height: 132px; resize: vertical; }
+.student-portal .sp-field input:read-only { background: #f3f3f3 !important; color: #6d6d6d !important; }
+.student-portal .sp-help { font-size: 11px; color: #888; line-height: 1.5; margin: 0; }
+.student-portal .sp-panel-subtitle { margin: 0 0 20px; font-size: 12px; color: #767676; }
+.student-portal .sp-form-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.student-portal .sp-message { margin-bottom: 18px; padding: 14px 17px; background: #f2f2f2; border: 1px solid #d5d5d5; border-radius: 11px; line-height: 1.5; font-size: 13px; color: #242424; }
+.student-portal .sp-message-error { background: #fff; border-left: 4px solid #222; }
+.student-portal .sp-profile-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(250px, 1fr); align-items: start; gap: 20px; }
+.student-portal .sp-profile-summary { text-align: center; }
+.student-portal .sp-profile-avatar { display: grid; place-items: center; margin: 0 auto 16px; width: 86px; height: 86px; border-radius: 24px; background: #111; color: white; font-size: 33px; font-weight: 850; }
+.student-portal .sp-profile-summary h2 { margin: 0 0 7px; font-size: 19px; overflow-wrap: anywhere; }
+.student-portal .sp-profile-summary p { color: #808080; font-size: 12px; margin: 0; overflow-wrap: anywhere; }
+.student-portal .sp-summary-data { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid #ececec; text-align: left; }
+.student-portal .sp-summary-data dt { color: #8b8b8b; font-size: 11px; margin-bottom: 3px; }
+.student-portal .sp-summary-data dd { font-size: 13px; color: #111; font-weight: 700; margin: 0 0 15px; overflow-wrap: anywhere; }
+.student-portal .sp-selected-course { display: grid; gap: 10px; background: #f5f5f5; border: 1px solid #e8e8e8; border-radius: 13px; padding: 17px; margin-bottom: 20px; }
+.student-portal .sp-selected-course strong { font-size: 17px; }
+.student-portal .sp-selected-course small { font-size: 12px; color: #777; }
+.student-portal .sp-footer { text-align: center; font-size: 11px; color: #8c8c8c; margin-top: 30px; }
+@media(max-width: 1050px) { .student-portal .sp-stats { grid-template-columns: repeat(2,minmax(0,1fr)); } .student-portal .sp-course-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width: 760px) { .student-portal .sp-main { padding: 22px 16px 45px; } .student-portal .sp-content-grid, .student-portal .sp-profile-grid { grid-template-columns: 1fr; } .student-portal .sp-hero { grid-template-columns: 1fr; min-height: auto; border-radius: 17px; } .student-portal .sp-hero-decoration { display: none; } .student-portal .sp-panel { padding: 20px; } }
+@media(max-width: 550px) { .student-portal .sp-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; } .student-portal .sp-stat { padding: 15px 13px; border-radius: 12px; } .student-portal .sp-stat-value { font-size: 30px; } .student-portal .sp-course-grid, .student-portal .sp-form-grid { grid-template-columns: 1fr; } .student-portal .sp-field.sp-span-all { grid-column: auto; } .student-portal .sp-course-search { flex-basis: 100%; } .student-portal .sp-course-tools { padding: 12px; } .student-portal .sp-course-count { margin-left: 0; } .student-portal .sp-application-item { align-items: flex-start; flex-wrap: wrap; } .student-portal .sp-status { margin-left: 61px; } .student-portal .sp-hero-actions .sp-button { flex: 1 1 100%; } .student-portal .sp-page-heading h1 { font-size: 32px; } }
