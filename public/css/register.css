@@ -6,11 +6,11 @@
 }
 
 :root {
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --text-dark: #172554;
-    --text-muted: #64748b;
-    --border: #dbe4f0;
+    --primary: #9a0002;
+    --primary-dark: #9a0002;
+    --text-dark: #382720;
+    --text-muted: #9a0002;
+    --border: #efe6dd;
     --white: #ffffff;
 }
 
@@ -59,7 +59,7 @@ body {
     align-items: center;
     justify-content: center;
     color: white;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, #9a0002, #9a0002);
     border-radius: 15px;
     font-size: 23px;
     box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
@@ -117,7 +117,7 @@ body {
     margin: 0 auto 16px;
     color: var(--primary);
     background: #eff6ff;
-    border: 1px solid #dbeafe;
+    border: 1px solid #efe6dd;
     border-radius: 20px;
     font-size: 27px;
 }
@@ -147,7 +147,7 @@ body {
 }
 
 .form-group label {
-    color: #334155;
+    color: #382720;
     font-size: 13px;
     font-weight: 700;
 }
@@ -157,7 +157,7 @@ body {
 }
 
 .form-group label small {
-    color: #94a3b8;
+    color: #9a0002;
     font-weight: 400;
 }
 
@@ -170,7 +170,7 @@ body {
 .field-icon {
     position: absolute;
     left: 15px;
-    color: #94a3b8;
+    color: #9a0002;
     font-size: 14px;
     pointer-events: none;
 }
@@ -191,7 +191,7 @@ body {
 }
 
 .input-wrapper input::placeholder {
-    color: #a0aec0;
+    color: #9a0002;
 }
 
 .input-wrapper input:focus {
@@ -210,7 +210,7 @@ body {
     border: none;
     border-radius: 8px;
     background: transparent;
-    color: #64748b;
+    color: #9a0002;
     cursor: pointer;
 }
 
@@ -224,7 +224,7 @@ body {
 }
 
 .field-hint {
-    color: #94a3b8;
+    color: #9a0002;
     font-size: 11px;
 }
 
@@ -271,7 +271,7 @@ body {
     margin-top: 4px;
     padding: 13px 16px;
     color: white;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, #9a0002, #9a0002);
     border: none;
     border-radius: 10px;
     font: inherit;
@@ -323,7 +323,7 @@ body {
     gap: 9px;
     width: fit-content;
     margin: 24px auto 0;
-    color: #475569;
+    color: #9a0002;
     text-decoration: none;
     font-size: 13px;
     font-weight: 600;
@@ -335,7 +335,7 @@ body {
 
 .copyright {
     margin-top: 20px;
-    color: #94a3b8;
+    color: #9a0002;
     text-align: center;
     font-size: 11px;
     line-height: 1.6;

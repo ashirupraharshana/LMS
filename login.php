@@ -45,7 +45,7 @@ if (isset($_SESSION['user_id'])) {
 // Process login form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $oldEmail = trim((string) ($_POST['email'] ?? ''));
+    $oldEmail = strtolower(trim((string) ($_POST['identifier'] ?? '')));
     $password = (string) ($_POST['password'] ?? '');
     $token = $_POST['csrf_token'] ?? '';
 
@@ -55,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         !hash_equals($_SESSION['csrf_token'], $token)
     ) {
         $error = 'Your session has expired. Please refresh the page and try again.';
-    } elseif (!filter_var($oldEmail, FILTER_VALIDATE_EMAIL) || $password === '') {
-        $error = 'Please enter a valid email address and password.';
+    } elseif (($oldEmail === '' || strlen($oldEmail) > 190) || $password === '') {
+        $error = 'Please enter your username or email and password.';
     } elseif (!$pdo instanceof PDO) {
         if ($error === '') {
             $error = 'Unable to connect to the login service. Please try again later.';
@@ -66,16 +66,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare(
                 'SELECT id, full_name, email, password_hash, role, status
                  FROM users
-                 WHERE email = :email
+                 WHERE email = :email OR username = :username
                  LIMIT 1'
             );
 
-            $stmt->execute(['email' => $oldEmail]);
+            $stmt->execute(['email' => $oldEmail, 'username' => $oldEmail]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             // Verify the stored password hash
             if (!$user || !password_verify($password, $user['password_hash'])) {
-                $error = 'Invalid email address or password.';
+                $error = 'Incorrect username/email or password.';
             } elseif ($user['status'] !== 'active') {
                 if ($user['status'] === 'pending') {
                     $error = 'Your account is awaiting administrator approval.';
@@ -113,393 +113,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#111827">
-
-    <title>Login | Student Management System</title>
-
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-
-    <link rel="stylesheet" href="public/css/login.css">
-
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#101010">
+    <title>Log in | LMS</title>
+    <link rel="stylesheet" href="public/css/theme.css">
+    <link rel="stylesheet" href="public/css/auth.css">
 </head>
-
-<body>
-
-    <main class="auth-layout">
-
-        <!-- Premium brand panel -->
-        <aside class="auth-showcase">
-
-            <div class="showcase-glow glow-one"></div>
-            <div class="showcase-glow glow-two"></div>
-            <div class="showcase-grid"></div>
-
-            <a href="index.php" class="brand brand-light">
-                <span class="brand-icon">
-                    <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>
-                </span>
-
-                <span class="brand-text">
-                    <strong>Student</strong>
-                    <span>Management System</span>
-                </span>
-            </a>
-
-            <div class="showcase-content">
-
-                <div class="showcase-kicker">
-                    <span class="online-dot"></span>
-                    YOUR LEARNING PLATFORM
-                </div>
-
-                <h2>
-                    Your journey.<br>
-                    Your ambition.<br>
-                    <span>Your future.</span>
-                </h2>
-
-                <p class="showcase-description">
-                    Everything you need to stay connected with your
-                    academic journey, manage your account, and move
-                    forward with confidence.
-                </p>
-
-                <div class="feature-list">
-
-                    <div class="feature-item">
-                        <span class="feature-icon">
-                            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-                        </span>
-
-                        <div>
-                            <strong>Your learning, organized</strong>
-                            <span>Keep your academic experience connected.</span>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <span class="feature-icon">
-                            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-                        </span>
-
-                        <div>
-                            <strong>Secure account access</strong>
-                            <span>Your account starts with secure authentication.</span>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <span class="feature-icon">
-                            <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-                        </span>
-
-                        <div>
-                            <strong>Move forward with confidence</strong>
-                            <span>Access the tools available to your account.</span>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="showcase-quote">
-                    <span class="quote-line"></span>
-                    <p>
-                        Every great achievement begins with a single step.
-                    </p>
-                </div>
-
-            </div>
-
-            <div class="showcase-bottom">
-                <span>
-                    <i class="fa-regular fa-circle-check" aria-hidden="true"></i>
-                    A dedicated space for your academic journey
-                </span>
-
-                <span class="showcase-version">STUDENT PORTAL</span>
-            </div>
-
-            <!-- Decorative floating card -->
-            <div class="floating-card" aria-hidden="true">
-                <span class="floating-icon">
-                    <i class="fa-solid fa-lock"></i>
-                </span>
-
-                <span class="floating-copy">
-                    <strong>Secure access</strong>
-                    <small>Your account, protected</small>
-                </span>
-
-                <i class="fa-solid fa-circle-check floating-check"></i>
-            </div>
-
-        </aside>
-
-
-        <!-- Login section -->
-        <section class="auth-main">
-
-            <div class="auth-topbar">
-                <span class="topbar-label">
-                    <span class="topbar-dot"></span>
-                    STUDENT PORTAL
-                </span>
-
-                <a href="register.php" class="create-account-link">
-                    New here?
-                    <strong>Create account</strong>
-                    <i class="fa-solid fa-arrow-up-right-from-square"
-                        aria-hidden="true"></i>
-                </a>
-            </div>
-
-
-            <div class="auth-content">
-
-                <div class="login-heading">
-
-                    <div class="login-symbol">
-                        <i class="fa-solid fa-user-graduate" aria-hidden="true"></i>
-                    </div>
-
-                    <div class="heading-eyebrow">
-                        WELCOME BACK
-                    </div>
-
-                    <h1>Sign in to your account</h1>
-
-                    <p>
-                        Enter your credentials below to continue to your portal.
-                    </p>
-
-                </div>
-
-                <!-- Existing login form and CSRF protection -->
-                <form action="login.php" method="POST" class="login-form">
-
-                    <input
-                        type="hidden"
-                        name="csrf_token"
-                        value="<?= htmlspecialchars(
-                                    $_SESSION['csrf_token'],
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                ) ?>">
-
-                    <!-- Email -->
-                    <div class="form-group">
-
-                        <label for="email">Email address</label>
-
-                        <div class="input-wrapper">
-
-                            <i class="fa-regular fa-envelope input-icon"
-                                aria-hidden="true"></i>
-
-                            <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                class="field-input"
-                                placeholder="you@example.com"
-                                value="<?= htmlspecialchars(
-                                            $oldEmail,
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>"
-                                autocomplete="username"
-                                maxlength="190"
-                                required>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- Password -->
-                    <div class="form-group">
-
-                        <div class="password-header">
-                            <label for="password">Password</label>
-
-                            <a href="forgot-password.php" class="forgot-link">
-                                Forgot password?
-                            </a>
-                        </div>
-
-                        <div class="input-wrapper">
-
-                            <i class="fa-solid fa-lock input-icon"
-                                aria-hidden="true"></i>
-
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                class="field-input"
-                                placeholder="Enter your password"
-                                autocomplete="current-password"
-                                required>
-
-                            <button
-                                type="button"
-                                id="togglePassword"
-                                class="password-toggle"
-                                aria-label="Show password"
-                                aria-pressed="false">
-
-                                <i class="fa-regular fa-eye"
-                                    aria-hidden="true"></i>
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- Submit -->
-                    <button type="submit" class="login-button">
-
-                        <span>Sign in to your account</span>
-
-                        <span class="button-icon">
-                            <i class="fa-solid fa-arrow-right"
-                                aria-hidden="true"></i>
-                        </span>
-
-                    </button>
-
-                </form>
-
-
-                <!-- Security information -->
-                <div class="security-card">
-
-                    <span class="security-icon">
-                        <i class="fa-solid fa-shield-halved"
-                            aria-hidden="true"></i>
-                    </span>
-
-                    <div>
-                        <strong>Secure sign-in</strong>
-                        <p>
-                            Your account is protected by secure authentication.
-                        </p>
-                    </div>
-
-                    <i class="fa-solid fa-check security-check"
-                        aria-hidden="true"></i>
-
-                </div>
-
-
-                <div class="login-divider">
-                    <span>YOUR ACADEMIC JOURNEY STARTS HERE</span>
-                </div>
-
-
-                <a href="index.php" class="back-home">
-                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-                    Back to home
-                </a>
-
-            </div>
-
-
-            <footer class="auth-footer">
-                <span>
-                    &copy; <?= date('Y') ?> Student Management System
-                </span>
-
-                <span class="footer-separator">&bull;</span>
-
-                <span>All rights reserved.</span>
-            </footer>
-
+<body class="auth-page">
+    <main class="auth-shell">
+        <section class="auth-intro" aria-label="About the student portal">
+            <a class="auth-brand" href="index.php"><span class="auth-brand-mark">L.</span><span>LMS <small>STUDENT PORTAL</small></span></a>
+            <div class="auth-story"><span class="auth-kicker">LEARN / GROW / ACHIEVE</span><h2>Make room for<br><em>what's next.</em></h2><p>Browse courses, submit an application and access your learning information once an administrator activates your account.</p></div>
+            <div class="auth-footnote">COURSES &nbsp;·&nbsp; APPLICATIONS &nbsp;·&nbsp; STUDENTS</div>
         </section>
-
+        <section class="auth-panel">
+            <div class="auth-panel-top"><a href="pages/public/courses.php">← Browse courses</a><span>ACCOUNT ACCESS</span></div>
+            <div class="auth-form-wrap">
+                <div class="auth-title"><span class="auth-kicker">WELCOME BACK</span><h1>Log in</h1><p>Sign in with the credentials provided by your administrator.</p></div>
+                <?php if ($error !== ''): ?><div class="auth-alert" role="alert"><?= htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div><?php endif; ?>
+                <?php if (isset($_GET['logged_out'])): ?><div class="auth-alert auth-alert-neutral" role="status">You have been logged out.</div><?php endif; ?>
+                <form method="post" action="login.php" class="auth-form">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+                    <label for="email">Username or email</label>
+                    <input type="text" id="email" name="identifier" maxlength="190" required autocomplete="username" placeholder="Username or email address" value="<?= htmlspecialchars($oldEmail, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
+                    <div class="auth-label-line"><label for="password">Password</label><a href="forgot-password.php">Need help?</a></div>
+                    <div class="auth-password"><input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password"><button id="togglePassword" type="button" aria-label="Show password" aria-pressed="false">Show</button></div>
+                    <button class="auth-submit" type="submit">Sign in <span aria-hidden="true">↗</span></button>
+                </form>
+                <div class="auth-register"><p>New student? You don't need to create an account.</p><a href="pages/public/apply_course.php">Apply for a course ↗</a></div>
+            </div>
+            <footer class="auth-panel-foot">&copy; <?= date('Y') ?> LMS · Student Management System</footer>
+        </section>
     </main>
-
-
-
-
-    <script>
-        // Existing password visibility functionality
-        const passwordInput = document.getElementById('password');
-        const togglePassword = document.getElementById('togglePassword');
-        const passwordIcon = togglePassword.querySelector('i');
-
-        togglePassword.addEventListener('click', function() {
-            const showPassword = passwordInput.type === 'password';
-
-            passwordInput.type = showPassword ? 'text' : 'password';
-
-            passwordIcon.classList.toggle('fa-eye', !showPassword);
-            passwordIcon.classList.toggle('fa-eye-slash', showPassword);
-
-            this.setAttribute('aria-pressed', String(showPassword));
-            this.setAttribute(
-                'aria-label',
-                showPassword ? 'Hide password' : 'Show password'
-            );
-        });
-    </script>
-
-    <?php if (isset($error) && $error !== ''): ?>
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Login unsuccessful',
-                text: <?= json_encode(
-                            $error,
-                            JSON_HEX_TAG |
-                                JSON_HEX_APOS |
-                                JSON_HEX_QUOT |
-                                JSON_HEX_AMP
-                        ) ?>,
-                confirmButtonText: 'Try again',
-                confirmButtonColor: '#5065e9',
-                allowOutsideClick: false,
-                customClass: {
-                    popup: 'login-swal-popup',
-                    confirmButton: 'login-swal-confirm'
-                }
-            });
-        </script>
-    <?php endif; ?>
-
-    <?php if (
-        isset($_GET['logged_out']) &&
-        $_GET['logged_out'] === '1'
-    ): ?>
-        <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Successfully signed out!',
-                text: 'You have been logged out securely.',
-                confirmButtonText: 'Continue',
-                confirmButtonColor: '#5065e9',
-                timer: 3000,
-                timerProgressBar: true,
-                customClass: {
-                    popup: 'login-swal-popup',
-                    confirmButton: 'login-swal-confirm'
-                }
-            });
-        </script>
-    <?php endif; ?>
+    <script>const toggle=document.getElementById('togglePassword');toggle.addEventListener('click',()=>{const input=document.getElementById('password');const visible=input.type==='password';input.type=visible?'text':'password';toggle.textContent=visible?'Hide':'Show';toggle.setAttribute('aria-pressed',String(visible));toggle.setAttribute('aria-label',visible?'Hide password':'Show password');});</script>
 </body>
-
 </html>

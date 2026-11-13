@@ -1,0 +1,13 @@
+<nav class="main-navbar" aria-label="Main navigation">
+    <div class="nav-container">
+        <a href="/LMS/index.php" class="nav-logo"><span>LMS</span> / STUDENT PORTAL</a>
+        <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+        <div class="nav-menu" id="navMenu">
+            <a class="nav-link" href="/LMS/index.php">Home</a>
+            <a class="nav-link" href="/LMS/pages/public/courses.php">Courses</a>
+            <a class="nav-link" href="/LMS/pages/public/apply_course.php">Registration</a>
+            <a class="nav-login" href="/LMS/login.php">Log in</a>
+        </div>
+    </div>
+</nav>
+<script src="/LMS/js/navbar.js" defer></script>
