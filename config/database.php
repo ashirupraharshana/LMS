@@ -14,5 +14,5 @@ try {
 } catch (PDOException $e) {
     error_log('LMS database connection: ' . $e->getMessage());
     http_response_code(503);
-    exit('Database unavailable. Start MySQL in XAMPP, import database/lms.sql and check config/database.php.');
+    exit('Database unavailable. Start MySQL in XAMPP, import database/install_fresh.sql for a new installation and check config/database.php.');
 }

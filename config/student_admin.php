@@ -13,6 +13,9 @@ function success(string $text, string $url): void {
 }
 function studentFields(bool $passwordRequired): array {
     $name=field('full_name'); $email=strtolower(field('email')); $phone=field('phone'); $status=field('status');
+    $username = strtolower(field('username'));
+    if ($username === '' && $passwordRequired) throw new InvalidArgumentException('Enter a username for the student.');
+    if ($username !== '' && !preg_match('/^[a-z][a-z0-9._-]{2,31}$/D', $username)) throw new InvalidArgumentException('Username must be 3–32 characters, start with a letter and use only letters, digits, dots, hyphens or underscores.');
     $password=is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
     $confirm=is_string($_POST['confirm_password'] ?? null) ? $_POST['confirm_password'] : '';
     if ($name==='' || mb_strlen($name)>120) throw new InvalidArgumentException('Enter a name of 1–120 characters.');
@@ -23,12 +26,12 @@ function studentFields(bool $passwordRequired): array {
         if (strlen($password)<8 || strlen($password)>72) throw new InvalidArgumentException('Password must contain 8–72 bytes.');
         if ($password!==$confirm) throw new InvalidArgumentException('Passwords do not match.');
     }
-    return [$name,$email,$phone,$status,$password];
+    return [$name,$email,$phone,$status,$password,$username];
 }
 function operationError(Throwable $e): string {
     if ($e instanceof InvalidArgumentException) return $e->getMessage();
     error_log('LMS student operation: '.$e->getMessage());
-    return $e instanceof PDOException && $e->getCode()==='23000' ? 'This email is already registered or the record is linked to another item.' : 'The change could not be saved. Refresh and try again.';
+    return $e instanceof PDOException && $e->getCode()==='23000' ? 'This email or username is already in use, or the record is linked to another item.' : 'The change could not be saved. Refresh and try again.';
 }
 function startPage(string $title, string $subtitle): void {
     $adminName=$_SESSION['full_name'];
@@ -38,5 +41,5 @@ function startPage(string $title, string $subtitle): void {
 }
 function endPage(): void { echo '</div></main></div><script src="../../js/student-admin.js"></script></body></html>'; }
 function studentForm(array $values, bool $editing=false): void {
-    ?><div class="form-grid"><label>Full name *<input name="full_name" maxlength="120" required value="<?=h($values['full_name']??'')?>" autocomplete="name"></label><label>Email address *<input type="email" name="email" maxlength="190" required value="<?=h($values['email']??'')?>" autocomplete="email"></label><label>Phone number<input name="phone" maxlength="30" value="<?=h($values['phone']??'')?>" autocomplete="tel"></label><label>Account status<select name="status"><?php foreach(['active','inactive','pending'] as $s): ?><option value="<?=$s?>" <?=($values['status']??'active')===$s?'selected':''?>><?=ucfirst($s)?></option><?php endforeach; ?></select></label><label><?=$editing?'New password (optional)':'Initial password *'?><input type="password" name="password" minlength="8" maxlength="72" autocomplete="new-password" <?=$editing?'':'required'?>></label><label>Confirm password<input type="password" name="confirm_password" minlength="8" maxlength="72" autocomplete="new-password" <?=$editing?'':'required'?>></label></div><p class="muted"><?=$editing?'Leave both password fields blank to keep the current password.':'Share the initial password privately with the student.'?></p><div class="actions"><button class="btn" type="submit"><?=$editing?'Save changes':'Create student'?></button><a class="btn secondary" href="manage_students.php">Cancel</a></div><?php
+    ?><div class="form-grid"><label>Username <?=$editing?'':'*'?><input name="username" id="username" data-exclude="<?=h($values['id']??'')?>" maxlength="32" minlength="3" pattern="[A-Za-z][A-Za-z0-9._-]{2,31}" autocomplete="off" value="<?=h($values['username']??'')?>" <?=$editing?'':'required'?>><small class="username-hint muted" aria-live="polite">3–32 characters. Availability checked as you type.</small></label><label>Full name *<input name="full_name" maxlength="120" required value="<?=h($values['full_name']??'')?>" autocomplete="name"></label><label>Email address *<input type="email" name="email" maxlength="190" required value="<?=h($values['email']??'')?>" autocomplete="email"></label><label>Phone number<input name="phone" maxlength="30" value="<?=h($values['phone']??'')?>" autocomplete="tel"></label><label>Account status<select name="status"><?php foreach(['active','inactive','pending'] as $s): ?><option value="<?=$s?>" <?=($values['status']??'active')===$s?'selected':''?>><?=ucfirst($s)?></option><?php endforeach; ?></select></label><label><?=$editing?'New password (optional)':'Initial password *'?><input type="password" name="password" minlength="8" maxlength="72" autocomplete="new-password" <?=$editing?'':'required'?>></label><label>Confirm password<input type="password" name="confirm_password" minlength="8" maxlength="72" autocomplete="new-password" <?=$editing?'':'required'?>></label></div><p class="muted"><?=$editing?'Leave both password fields blank to keep the current password.':'Share the initial password privately with the student.'?></p><div class="actions"><button class="btn" type="submit"><?=$editing?'Save changes':'Create student'?></button><a class="btn secondary" href="manage_students.php">Cancel</a></div><?php
 }

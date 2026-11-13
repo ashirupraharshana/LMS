@@ -4,9 +4,9 @@ $error=''; $values=[];
 if ($_SERVER['REQUEST_METHOD']==='POST') {
     $values=$_POST;
     try {
-        checkCsrf(); [$name,$email,$phone,$status,$password]=studentFields(true);
-        $q=$pdo->prepare("INSERT INTO users(full_name,email,phone,password_hash,role,status) VALUES(?,?,?,?,'student',?)");
-        $q->execute([$name,$email,$phone,password_hash($password,PASSWORD_DEFAULT),$status]);
+        checkCsrf(); [$name,$email,$phone,$status,$password,$username]=studentFields(true);
+        $q=$pdo->prepare("INSERT INTO users(full_name,email,phone,password_hash,role,status,username) VALUES(?,?,?,?,'student',?,?)");
+        $q->execute([$name,$email,$phone,password_hash($password,PASSWORD_DEFAULT),$status,$username]);
         success('Student account created successfully.','manage_students.php');
     } catch (Throwable $e) { $error=operationError($e); }
 }

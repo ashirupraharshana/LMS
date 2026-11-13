@@ -41,7 +41,7 @@ try {
     }
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $courseStmt = $pdo->query(
-        "SELECT c.id, c.title FROM courses c JOIN course_categories cc ON cc.id=c.category_id WHERE c.status='published' AND cc.status='active' ORDER BY c.title ASC"
+        "SELECT c.id, c.title, c.seat_capacity, (SELECT COUNT(*) FROM course_applications a WHERE a.course_id=c.id AND a.status='approved') AS occupied_seats FROM courses c JOIN course_categories cc ON cc.id=c.category_id WHERE c.status='published' AND cc.status='active' ORDER BY c.title ASC"
     );
     $courses = $courseStmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
@@ -65,48 +65,47 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $formError = 'Enter your full name (maximum 120 characters).';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 190) {
         $formError = 'Enter a valid email address.';
-    } elseif ($phone !== '' && applyLength($phone) > 30) {
-        $formError = 'The phone number cannot exceed 30 characters.';
-    } elseif (applyLength($message) > 5000) {
-        $formError = 'The message cannot exceed 5,000 characters.';
+    } elseif ($phone === '' || applyLength($phone) > 30) {
+        $formError = 'Enter your phone number (maximum 30 characters).';
+    } elseif ($message === '' || applyLength($message) > 5000) {
+        $formError = 'Enter your application message (maximum 5,000 characters).';
     } else {
         $courseId = filter_var($selectedCourse, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($courseId === false) {
             $formError = 'Please select a course.';
         } else {
             try {
-                $checkCourse = $pdo->prepare("SELECT c.id FROM courses c JOIN course_categories cc ON cc.id=c.category_id WHERE c.id=:id AND c.status='published' AND cc.status='active'");
+                $pdo->beginTransaction();
+                $checkCourse = $pdo->prepare("SELECT c.id, c.seat_capacity FROM courses c JOIN course_categories cc ON cc.id=c.category_id WHERE c.id=:id AND c.status='published' AND cc.status='active' FOR UPDATE");
                 $checkCourse->execute([':id' => $courseId]);
-                if (!$checkCourse->fetchColumn()) {
+                $course = $checkCourse->fetch(PDO::FETCH_ASSOC);
+                if (!$course) {
                     $formError = 'That course is not available for applications. Please select another course.';
                 } else {
-                    $duplicate = $pdo->prepare(
-                        "SELECT id FROM course_applications
-                         WHERE course_id = :course_id AND email = :email AND status = 'pending'
-                         LIMIT 1"
-                    );
-                    $duplicate->execute([':course_id' => $courseId, ':email' => $email]);
-                    if ($duplicate->fetchColumn()) {
-                        $formError = 'You already have a pending application for this course.';
+                    $filledStmt = $pdo->prepare("SELECT COUNT(*) FROM course_applications WHERE course_id = :id AND status = 'approved'");
+                    $filledStmt->execute([':id'=>$courseId]);
+                    $filled = (int)$filledStmt->fetchColumn();
+                    if ($filled >= (int)$course['seat_capacity']) {
+                        $formError = 'This course has reached its seat limit. Please select another course.';
                     } else {
-                        $insert = $pdo->prepare(
-                            'INSERT INTO course_applications (course_id, full_name, email, phone, message)
-                             VALUES (:course_id, :full_name, :email, :phone, :message)'
-                        );
-                        $insert->execute([
-                            ':course_id' => $courseId,
-                            ':full_name' => $fullName,
-                            ':email' => $email,
-                            ':phone' => $phone === '' ? null : $phone,
-                            ':message' => $message === '' ? null : $message,
-                        ]);
-                        $_SESSION['course_application_success'] = 'Your course application has been submitted. The administrator will review it.';
-                        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-                        header('Location: apply_course.php');
-                        exit;
+                        $duplicate = $pdo->prepare("SELECT id FROM course_applications WHERE course_id=:course_id AND email=:email AND status IN ('pending','approved') LIMIT 1");
+                        $duplicate->execute([':course_id'=>$courseId, ':email'=>$email]);
+                        if ($duplicate->fetchColumn()) {
+                            $formError = 'You already have an application for this course.';
+                        } else {
+                            $insert = $pdo->prepare('INSERT INTO course_applications (course_id, full_name, email, phone, message) VALUES (:course_id,:full_name,:email,:phone,:message)');
+                            $insert->execute([':course_id'=>$courseId, ':full_name'=>$fullName, ':email'=>$email, ':phone'=>$phone, ':message'=>$message]);
+                            $pdo->commit();
+                            $_SESSION['course_application_success'] = 'Your course application has been submitted. The administrator will review it.';
+                            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                            header('Location: apply_course.php');
+                            exit;
+                        }
                     }
                 }
+                if ($pdo->inTransaction()) $pdo->rollBack();
             } catch (Throwable $e) {
+                if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
                 error_log('Course application insert error: ' . $e->getMessage());
                 $formError = 'Your application could not be saved. Please try again later.';
             }
@@ -156,14 +155,14 @@ if (!$courses && $pageError === '') {
     <link rel="stylesheet" href="/LMS/Components/public/css/navbar.css">
     <script src="../../public/vendor/sweetalert2.all.min.js"></script>
     <style>
-        :root{--primary:#9a0002;--text:#382720;--muted:#9a0002;--border:#e5e7eb;--bg:#f6f7fb}
+        :root{--primary:#212121;--text:#2a2a2a;--muted:#212121;--border:#e7e7e7;--bg:#f7f7f7}
         /* SweetAlert2 styling matched to the admin Categories page */
         .apply-swal-popup {
-            border: 1px solid #e7eaf2 !important;
+            border: 1px solid #eaeaea !important;
             border-radius: 22px !important;
             padding: 30px 24px !important;
             font-family: Inter, "Segoe UI", sans-serif !important;
-            box-shadow: 0 24px 70px rgba(23, 32, 51, 0.16) !important;
+            box-shadow: 0 24px 70px rgba(31,31,31,0.16) !important;
         }
 
         .apply-swal-confirm {
@@ -171,25 +170,25 @@ if (!$courses && $pageError === '') {
             padding: 12px 22px !important;
             border: 0 !important;
             border-radius: 10px !important;
-            background: #9a0002 !important;
-            color: #fff !important;
+            background: #212121 !important;
+            color: #ffffff !important;
             font-size: 13px !important;
             font-weight: 700 !important;
-            box-shadow: 0 5px 14px rgba(80, 101, 233, 0.2) !important;
+            box-shadow: 0 5px 14px rgba(106,106,106,0.2) !important;
             cursor: pointer !important;
         }
 
         .apply-swal-confirm:focus {
-            box-shadow: 0 0 0 4px rgba(80, 101, 233, 0.18) !important;
+            box-shadow: 0 0 0 4px rgba(106,106,106,0.18) !important;
         }
 
         .apply-swal-cancel {
             min-width: 110px !important;
             padding: 12px 22px !important;
-            border: 1px solid #e5e7eb !important;
+            border: 1px solid #e7e7e7 !important;
             border-radius: 10px !important;
-            background: #fff !important;
-            color: #382720 !important;
+            background: #ffffff !important;
+            color: #2a2a2a !important;
             font-size: 13px !important;
             font-weight: 700 !important;
             cursor: pointer !important;
@@ -198,24 +197,24 @@ if (!$courses && $pageError === '') {
         .empty-courses {
             margin-top: 22px;
             padding: 28px 20px;
-            border: 1px dashed #d9deea;
+            border: 1px dashed #dedede;
             border-radius: 14px;
-            background: #fff;
+            background: #ffffff;
             text-align: center;
         }
-        .empty-courses > i { display:block; margin-bottom:10px; color:#9a0002; font-size:25px; }
-        .empty-courses h2 { margin:0 0 6px; color:#382720; font-size:16px; }
+        .empty-courses > i { display:block; margin-bottom:10px; color:#212121; font-size:25px; }
+        .empty-courses h2 { margin:0 0 6px; color:#2a2a2a; font-size:16px; }
         .empty-courses p { margin:0; }
 
         *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
         .page{width:min(760px,calc(100% - 28px));margin:42px auto}.brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;color:var(--text);text-decoration:none;font-weight:800}
-        .brand-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:#eef2ff;color:var(--primary)}
-        .card{background:#fff;border:1px solid #e9ecf2;border-radius:20px;padding:clamp(22px,5vw,36px);box-shadow:0 12px 35px rgba(15,23,42,.06)}
+        .brand-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:#f2f2f2;color:var(--primary)}
+        .card{background:#ffffff;border:1px solid #ececec;border-radius:20px;padding:clamp(22px,5vw,36px);box-shadow:0 12px 35px rgba(23,23,23,.06)}
         .eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--primary)}h1{margin:9px 0 8px;font-size:clamp(25px,4vw,34px);letter-spacing:-.03em}p{color:var(--muted);font-size:14px;line-height:1.65}
-        .notice{padding:13px 15px;border-radius:12px;margin:16px 0;font-size:13px;line-height:1.6}.success{background:#ecfdf3;color:#166534}.error{background:#fef2f2;color:#991b1b}
-        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}.field{display:flex;flex-direction:column;gap:7px}.wide{grid-column:1/-1}label{font-size:12px;font-weight:750;color:#382720}
-        input,select,textarea{width:100%;border:1px solid #dfe3eb;border-radius:10px;padding:12px;background:#fff;color:#382720;font:inherit;font-size:13px;outline:none}textarea{min-height:110px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#9a0002;box-shadow:0 0 0 3px rgba(99,102,241,.12)}
-        .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:42px;padding:11px 16px;border:1px solid transparent;border-radius:10px;text-decoration:none;font-size:12px;font-weight:800;cursor:pointer}.primary{background:var(--primary);color:#fff}.light{border-color:var(--border);background:#fff;color:#9a0002}.foot{margin-top:18px;text-align:center;font-size:12px;color:#9a0002}
+        .notice{padding:13px 15px;border-radius:12px;margin:16px 0;font-size:13px;line-height:1.6}.success{background:#f9f9f9;color:#515151}.error{background:#f5f5f5;color:#363636}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}.field{display:flex;flex-direction:column;gap:7px}.wide{grid-column:1/-1}label{font-size:12px;font-weight:750;color:#2a2a2a}
+        input,select,textarea{width:100%;border:1px solid #e3e3e3;border-radius:10px;padding:12px;background:#ffffff;color:#2a2a2a;font:inherit;font-size:13px;outline:none}textarea{min-height:110px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#212121;box-shadow:0 0 0 3px rgba(111,111,111,.12)}
+        .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}.btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:42px;padding:11px 16px;border:1px solid transparent;border-radius:10px;text-decoration:none;font-size:12px;font-weight:800;cursor:pointer}.primary{background:var(--primary);color:#ffffff}.light{border-color:var(--border);background:#ffffff;color:#212121}.foot{margin-top:18px;text-align:center;font-size:12px;color:#212121}
         @media(max-width:600px){.page{margin:20px auto}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.actions .btn{flex:1}}
     </style>
 <link rel="stylesheet" href="../../public/css/theme.css">
@@ -224,32 +223,36 @@ if (!$courses && $pageError === '') {
 
 <?php include __DIR__ . '/../../Components/public/navbar.php'; ?>
 <main class="page">
-    <a class="brand" href="index.php"><span class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></span><span>Student Management System</span></a>
+    <a class="brand" href="../../index.php"><span class="brand-icon"><i class="fa-solid fa-graduation-cap"></i></span><span>Student Management System</span></a>
     <section class="card">
+        <?php if ($formError !== ''): ?><div class="notice error" role="alert"><?=applyEscape($formError)?></div><?php endif; ?>
+        <?php if ($pageError !== ''): ?><div class="notice error" role="alert"><?=applyEscape($pageError)?></div><?php endif; ?>
+        <?php if ($successMessage !== ''): ?><div class="notice" role="status"><?=applyEscape($successMessage)?></div><?php endif; ?>
         <div class="eyebrow"><i class="fa-solid fa-file-circle-plus"></i> COURSE APPLICATION</div>
         <h1>Apply for a course</h1>
         <p>Students do not create accounts directly. Submit your application for a published course; an administrator will review it and, if approved, create your student account.</p>
-        <?php if (!$courses): ?>
+        <?php $hasOpenSeats=false; foreach($courses as $course){ if((int)$course['occupied_seats'] < (int)$course['seat_capacity']){$hasOpenSeats=true;break;} } ?>
+        <?php if (!$hasOpenSeats): ?>
             <div class="empty-courses">
                 <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
-                <h2>No published courses available</h2>
-                <p>Published courses will appear here when the administrator makes them available.</p>
+                <h2>No seats currently available</h2>
+                <p>Courses will open for registration when a published course has available seats.</p>
             </div>
         <?php else: ?>
-        <form method="post" action="apply_course.php" novalidate>
+        <form method="post" action="apply_course.php">
             <input type="hidden" name="csrf_token" value="<?= applyEscape($_SESSION['csrf_token']) ?>">
             <div class="grid">
                 <div class="field wide"><label for="course_id">Course <span style="color:#dc2626">*</span></label>
                     <select id="course_id" name="course_id" required><option value="">Choose a course</option>
-                    <?php foreach ($courses as $course): ?><option value="<?= (int)$course['id'] ?>" <?= (string)$course['id'] === $selectedCourse ? 'selected' : '' ?>><?= applyEscape($course['title']) ?></option><?php endforeach; ?>
+                    <?php foreach ($courses as $course): $full=(int)$course['occupied_seats'] >= (int)$course['seat_capacity']; ?><option value="<?= (int)$course['id'] ?>" <?= $full?'disabled':'' ?> <?= (string)$course['id'] === $selectedCourse && !$full ? 'selected' : '' ?>><?= applyEscape($course['title']) ?> — <?= (int)$course['occupied_seats'] ?>/<?= (int)$course['seat_capacity'] ?> seats filled<?= $full ? ' (Full)' : '' ?></option><?php endforeach; ?>
                     </select>
                 </div>
                 <div class="field"><label for="full_name">Full name <span style="color:#dc2626">*</span></label><input id="full_name" name="full_name" maxlength="120" autocomplete="name" required value="<?= applyEscape($fullName) ?>"></div>
                 <div class="field"><label for="email">Email address <span style="color:#dc2626">*</span></label><input id="email" name="email" type="email" maxlength="190" autocomplete="email" required value="<?= applyEscape($email) ?>"></div>
-                <div class="field wide"><label for="phone">Phone number (optional)</label><input id="phone" name="phone" type="tel" maxlength="30" autocomplete="tel" value="<?= applyEscape($phone) ?>"></div>
-                <div class="field wide"><label for="message">Application message (optional)</label><textarea id="message" name="message" maxlength="5000" placeholder="Tell us briefly why you are interested in this course."><?= applyEscape($message) ?></textarea></div>
+                <div class="field wide"><label for="phone">Phone number *</label><input id="phone" name="phone" type="tel" maxlength="30" autocomplete="tel" required value="<?= applyEscape($phone) ?>"></div>
+                <div class="field wide"><label for="message">Application message *</label><textarea id="message" name="message" maxlength="5000" required placeholder="Tell us briefly why you are interested in this course."><?= applyEscape($message) ?></textarea></div>
             </div>
-            <div class="actions"><button class="btn primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Submit application</button><a class="btn light" href="courses.php">Back to home</a></div>
+            <div class="actions"><button class="btn primary" type="submit"><i class="fa-solid fa-paper-plane"></i> Submit application</button><a class="btn light" href="courses.php">Back to courses</a></div>
         </form>
         <?php endif; ?>
     </section>
