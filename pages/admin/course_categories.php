@@ -304,24 +304,11 @@ if ($pdo instanceof PDO) {
         );
         $stats = array_merge($stats, $statsStmt->fetch(PDO::FETCH_ASSOC) ?: []);
 
-        if ($searchTerm !== '') {
-            $stmt = $pdo->prepare(
-                'SELECT id, name, description, status, created_at, updated_at
-                 FROM course_categories
-                 WHERE name LIKE :name_search OR description LIKE :description_search
-                 ORDER BY created_at DESC, id DESC'
-            );
-            $likeSearch = '%' . $searchTerm . '%';
-            $stmt->bindValue(':name_search', $likeSearch, PDO::PARAM_STR);
-            $stmt->bindValue(':description_search', $likeSearch, PDO::PARAM_STR);
-            $stmt->execute();
-        } else {
-            $stmt = $pdo->query(
+        $stmt = $pdo->query(
                 'SELECT id, name, description, status, created_at, updated_at
                  FROM course_categories
                  ORDER BY created_at DESC, id DESC'
             );
-        }
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
         error_log('Course category list error: ' . $e->getMessage());
@@ -1033,6 +1020,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     </style>
 <link rel="stylesheet" href="../../public/css/theme.css">
     <link rel="stylesheet" href="../../Components/admin/style/admin-mono.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/dt-3.1.5/datatables.min.css"><link rel="stylesheet" href="../../public/css/admin-datatables.css">
 </head>
 
 <body>
@@ -1201,21 +1189,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <h2 id="categoryListTitle">All course categories</h2>
                             <p>View category details, make changes, or remove a category.</p>
                         </div>
-                        <form class="category-search-form" method="get" action="course_categories.php" role="search">
-                            <div class="category-search-input-wrap">
-                                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                                <input class="category-search-input" type="search" name="q" value="<?= escapeOutput($searchTerm) ?>" placeholder="Search name or description..." aria-label="Search categories">
-                            </div>
-                            <button class="category-btn category-btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
-                            <?php if ($searchTerm !== ''): ?>
-                                <a class="category-btn category-btn-light" href="course_categories.php" aria-label="Clear search">Clear</a>
-                            <?php endif; ?>
-                        </form>
+
                     </div>
 
                     <?php if ($categories): ?>
                         <div class="category-table-wrap">
-                            <table class="category-table">
+                            <table class="category-table lms-admin-data" data-admin-datatable data-search="<?=escapeOutput($searchTerm)?>" data-empty="No categories found.">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -1223,7 +1202,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                                         <th>Description</th>
                                         <th>Status</th>
                                         <th>Created</th>
-                                        <th>Actions</th>
+                                        <th data-dt-order="disable">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1259,9 +1238,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
-                        </div>
-                        <div class="category-panel-footer">
-                            Showing <?= number_format(count($categories)) ?> categor<?= count($categories) === 1 ? 'y' : 'ies' ?><?= $searchTerm !== '' ? ' matching “' . escapeOutput($searchTerm) . '”' : '' ?>.
                         </div>
                     <?php else: ?>
                         <div class="category-empty-state">
@@ -1373,6 +1349,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         });
 
     </script>
+<script src="https://cdn.datatables.net/v/dt/dt-3.1.5/datatables.min.js"></script><script src="../../js/admin-datatables.js" defer></script>
 </body>
 
 </html>

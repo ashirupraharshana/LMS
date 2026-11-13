@@ -2,6 +2,7 @@
 declare(strict_types=1);
 $requiredRole = 'admin';
 require_once __DIR__ . '/../../config/auth.php';
+require_once __DIR__ . '/../../config/image_helpers.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -87,6 +88,7 @@ $showEditForm = false;
 $editCourse = null;
 $courses = [];
 $categories = [];
+$instructors = [];
 $stats = [
     'total_courses' => 0,
     'published_courses' => 0,
@@ -100,6 +102,7 @@ $formValues = [
     'category_id' => '',
     'status' => 'draft',
     'seat_capacity' => '30',
+    'instructor_id' => '',
 ];
 
 $flash = $_SESSION['manage_courses_flash'] ?? null;
@@ -127,6 +130,7 @@ try {
     // are included and labelled so existing courses can still be edited safely.
     $categoryStmt = $pdo->query('SELECT id, name, status FROM course_categories ORDER BY name ASC');
     $categories = $categoryStmt->fetchAll();
+    $instructors = $pdo->query('SELECT id, full_name, status FROM instructors ORDER BY full_name')->fetchAll();
 } catch (Throwable $e) {
     error_log('Manage courses connection/category error: ' . $e->getMessage());
     $pageError = 'Course data or categories could not be loaded. Check the database connection and required tables.';
@@ -147,6 +151,7 @@ if ($isPost) {
             'category_id' => trim((string) ($_POST['category_id'] ?? '')),
             'status' => (string) ($_POST['status'] ?? 'draft'),
             'seat_capacity' => trim((string) ($_POST['seat_capacity'] ?? '')),
+            'instructor_id' => trim((string) ($_POST['instructor_id'] ?? '')),
         ];
         $formAction = $postAction;
         $showEditForm = $postAction === 'update';
@@ -165,6 +170,7 @@ if ($isPost) {
                 $description = $formValues['description'];
                 $status = $formValues['status'];
                 $seatCapacity = filter_var($formValues['seat_capacity'], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1,'max_range'=>100000]]);
+                $instructorId = $formValues['instructor_id'] === '' ? null : filter_var($formValues['instructor_id'], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
 
                 if ($postAction === 'update' && $id === false) {
                     $formError = 'The course ID is invalid. Please select the course again.';
@@ -176,6 +182,8 @@ if ($isPost) {
                     $formError = 'The description cannot exceed 5,000 characters.';
                 } elseif ($seatCapacity === false) {
                     $formError = 'Enter a seat capacity between 1 and 100,000.';
+                } elseif ($instructorId === false) {
+                    $formError = 'Please select a valid instructor.';
                 } elseif ($categoryId === false) {
                     $formError = 'Please select a course category.';
                 } elseif (!in_array($status, ['draft', 'published', 'archived'], true)) {
@@ -186,12 +194,28 @@ if ($isPost) {
                     if (!$categoryCheck->fetchColumn()) {
                         $formError = 'The selected category no longer exists. Refresh the page and select another category.';
                     } else {
+                        if ($instructorId !== null) {
+                            $checkInstructor = $pdo->prepare('SELECT id FROM instructors WHERE id = :id');
+                            $checkInstructor->execute([':id' => $instructorId]);
+                            if (!$checkInstructor->fetchColumn()) $formError = 'Selected instructor no longer exists.';
+                        }
+                        if ($formError !== '') { /* Keep posted values; do not write changes. */ }
+                        else {
                         $descriptionValue = $description === '' ? null : $description;
+
+                        // On edit, preserve the existing image unless replaced/removed.
+                        $existingImage = null;
+                        if ($postAction === 'update' && $id) {
+                            $imageQuery = $pdo->prepare('SELECT cover_image_base64 FROM courses WHERE id=?');
+                            $imageQuery->execute([$id]);
+                            $existingImage = $imageQuery->fetchColumn() ?: null;
+                        }
+                        $courseImage = lmsUploadImage('cover_image', $existingImage, 'remove_cover_image');
 
                         if ($postAction === 'add') {
                             $stmt = $pdo->prepare(
-                                'INSERT INTO courses (title, description, category_id, status, seat_capacity)
-                                 VALUES (:title, :description, :category_id, :status, :seat_capacity)'
+                                'INSERT INTO courses (title, description, category_id, status, seat_capacity, instructor_id, cover_image_base64)
+                                 VALUES (:title, :description, :category_id, :status, :seat_capacity, :instructor_id, :cover_image_base64)'
                             );
                             $stmt->execute([
                                 ':title' => $title,
@@ -199,6 +223,8 @@ if ($isPost) {
                                 ':category_id' => $categoryId,
                                 ':status' => $status,
                                 ':seat_capacity' => $seatCapacity,
+                                ':instructor_id' => $instructorId,
+                                ':cover_image_base64' => $courseImage,
                             ]);
                             setCourseFlash('success', 'Course added successfully.');
                         } else {
@@ -218,10 +244,10 @@ if ($isPost) {
                                     $pdo->rollBack();
                                     $formError = "Capacity cannot be less than {$occupied} approved applications.";
                                 } else {
-                                    $stmt = $pdo->prepare('UPDATE courses SET title = :title, description = :description, category_id = :category_id, status = :status, seat_capacity = :seat_capacity WHERE id = :id');
+                                    $stmt = $pdo->prepare('UPDATE courses SET title = :title, description = :description, category_id = :category_id, status = :status, seat_capacity = :seat_capacity, instructor_id = :instructor_id, cover_image_base64 = :cover_image_base64 WHERE id = :id');
                                     $stmt->execute([
                                         ':title'=>$title, ':description'=>$descriptionValue, ':category_id'=>$categoryId,
-                                        ':status'=>$status, ':seat_capacity'=>$seatCapacity, ':id'=>$id,
+                                        ':status'=>$status, ':seat_capacity'=>$seatCapacity, ':instructor_id'=>$instructorId, ':cover_image_base64'=>$courseImage, ':id'=>$id,
                                     ]);
                                     $pdo->commit();
                                 }
@@ -232,6 +258,7 @@ if ($isPost) {
                             }
                         }
 
+                        } // instructor validation
                         if ($formError === '') {
                             redirectToCourses($searchTerm);
                         }
@@ -255,6 +282,9 @@ if ($isPost) {
             } else {
                 $formError = 'Invalid request. Please try again.';
             }
+        } catch (InvalidArgumentException $e) {
+            if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
+            $formError = $e->getMessage();
         } catch (PDOException $e) {
             if ($pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
             error_log('Manage course operation error: ' . $e->getMessage());
@@ -278,7 +308,7 @@ if (!$isPost && isset($_GET['edit'])) {
         $formError = 'The selected course ID is invalid.';
     } elseif ($pdo instanceof PDO) {
         try {
-            $stmt = $pdo->prepare('SELECT id, title, description, category_id, status, seat_capacity FROM courses WHERE id = :id');
+            $stmt = $pdo->prepare('SELECT id, title, description, category_id, status, seat_capacity, instructor_id, cover_image_base64 FROM courses WHERE id = :id');
             $stmt->execute([':id' => $editId]);
             $editCourse = $stmt->fetch() ?: null;
 
@@ -290,6 +320,7 @@ if (!$isPost && isset($_GET['edit'])) {
                     'category_id' => (string) $editCourse['category_id'],
                     'status' => (string) $editCourse['status'],
                     'seat_capacity' => (string) $editCourse['seat_capacity'],
+                    'instructor_id' => (string) ($editCourse['instructor_id'] ?? ''),
                 ];
                 $formAction = 'update';
                 $showEditForm = true;
@@ -315,33 +346,15 @@ if ($pdo instanceof PDO) {
         );
         $stats = array_merge($stats, $statsStmt->fetch() ?: []);
 
-        if ($searchTerm !== '') {
-            $stmt = $pdo->prepare(
-                'SELECT c.id, c.title, c.description, c.category_id, c.status, c.seat_capacity, c.created_at, c.updated_at,
+        $stmt = $pdo->query(
+                'SELECT c.id, c.title, c.description, c.category_id, c.status, c.seat_capacity, c.instructor_id, c.cover_image_base64, c.created_at, c.updated_at,
                         (SELECT COUNT(*) FROM course_applications a WHERE a.course_id=c.id AND a.status=\'approved\') AS occupied_seats,
-                        cc.name AS category_name, cc.status AS category_status
+                        cc.name AS category_name, cc.status AS category_status, ins.full_name AS instructor_name
                  FROM courses c
                  INNER JOIN course_categories cc ON cc.id = c.category_id
-                 WHERE c.title LIKE :title_search
-                    OR c.description LIKE :description_search
-                    OR cc.name LIKE :category_search
+                 LEFT JOIN instructors ins ON ins.id = c.instructor_id
                  ORDER BY c.created_at DESC, c.id DESC'
             );
-            $likeSearch = '%' . $searchTerm . '%';
-            $stmt->bindValue(':title_search', $likeSearch, PDO::PARAM_STR);
-            $stmt->bindValue(':description_search', $likeSearch, PDO::PARAM_STR);
-            $stmt->bindValue(':category_search', $likeSearch, PDO::PARAM_STR);
-            $stmt->execute();
-        } else {
-            $stmt = $pdo->query(
-                'SELECT c.id, c.title, c.description, c.category_id, c.status, c.seat_capacity, c.created_at, c.updated_at,
-                        (SELECT COUNT(*) FROM course_applications a WHERE a.course_id=c.id AND a.status=\'approved\') AS occupied_seats,
-                        cc.name AS category_name, cc.status AS category_status
-                 FROM courses c
-                 INNER JOIN course_categories cc ON cc.id = c.category_id
-                 ORDER BY c.created_at DESC, c.id DESC'
-            );
-        }
         $courses = $stmt->fetchAll();
     } catch (Throwable $e) {
         error_log('Manage course list error: ' . $e->getMessage());
@@ -441,6 +454,8 @@ if ($formError !== '') {
     </style>
 <link rel="stylesheet" href="../../public/css/theme.css">
     <link rel="stylesheet" href="../../Components/admin/style/admin-mono.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/dt-3.1.5/datatables.min.css"><link rel="stylesheet" href="../../public/css/admin-datatables.css">
+<link rel="stylesheet" href="../../Components/admin/style/admin-v2.css">
 </head>
 <body>
 <div class="app">
@@ -496,7 +511,7 @@ if ($formError !== '') {
                     <?php if (!$categories): ?>
                         <p class="course-help">No course categories were found. Add a category in Categories before creating a course.</p>
                     <?php endif; ?>
-                    <form id="courseForm" method="post" action="manage_courses.php<?= $searchTerm !== '' ? '?q=' . rawurlencode($searchTerm) : '' ?>" autocomplete="off">
+                    <form id="courseForm" enctype="multipart/form-data" method="post" action="manage_courses.php<?= $searchTerm !== '' ? '?q=' . rawurlencode($searchTerm) : '' ?>" autocomplete="off">
                         <input type="hidden" name="csrf_token" value="<?= escapeOutput($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="action" value="<?= escapeOutput($formAction) ?>">
                         <input type="hidden" name="return_q" value="<?= escapeOutput($searchTerm) ?>">
@@ -523,6 +538,18 @@ if ($formError !== '') {
                                 <label for="courseSeats">Available seats <span class="required">*</span></label>
                                 <input id="courseSeats" name="seat_capacity" type="number" min="1" max="100000" step="1" inputmode="numeric" required value="<?= escapeOutput($formValues['seat_capacity']) ?>">
                                 <span class="course-help">Once approved seats reach this limit, applications close automatically.</span>
+                            </div>
+                            <div class="course-field">
+                                <label for="courseInstructor">Assigned instructor</label>
+                                <select id="courseInstructor" name="instructor_id"><option value="">Unassigned</option>
+                                  <?php foreach($instructors as $ins): ?><option value="<?=(int)$ins['id']?>" <?= (string)$formValues['instructor_id']===(string)$ins['id']?'selected':'' ?>><?=escapeOutput($ins['full_name'])?><?= $ins['status']==='inactive'?' (Inactive)':'' ?></option><?php endforeach; ?>
+                                </select><span class="course-help">Optional. Select an instructor from the Instructor directory.</span>
+                            </div>
+                            <div class="course-field full">
+                                <label for="courseImageUpload">Course cover image (JPG, PNG, WebP · max 1 MB)</label>
+                                <input id="courseImageUpload" type="file" name="cover_image" accept="image/jpeg,image/png,image/webp" data-image-preview="courseCoverPreview">
+                                <div class="lms-edit-photo lms-cover-preview" id="courseCoverPreview"><?php if($editCourse && !empty($editCourse['cover_image_base64'])): ?><?=lmsImageHtml($editCourse['cover_image_base64'],'Course cover preview')?><?php else: ?><span>Course cover preview</span><?php endif; ?></div>
+                                <?php if($editCourse && !empty($editCourse['cover_image_base64'])): ?><label class="lms-checkbox"><input type="checkbox" name="remove_cover_image" value="1"> Remove current cover</label><?php endif; ?>
                             </div>
                             <div class="course-field full">
                                 <label for="courseDescription">Description</label>
@@ -554,22 +581,19 @@ if ($formError !== '') {
             <section class="course-panel" aria-labelledby="courseListTitle">
                 <div class="course-panel-header">
                     <div><h2 id="courseListTitle">All courses</h2><p>Search courses, review their categories and statuses, or update existing records.</p></div>
-                    <form class="course-search" method="get" action="manage_courses.php" role="search">
-                        <div class="course-search-wrap"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" name="q" value="<?= escapeOutput($searchTerm) ?>" placeholder="Search title, description, category..." aria-label="Search courses"></div>
-                        <button class="course-btn course-btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search</button>
-                        <?php if ($searchTerm !== ''): ?><a class="course-btn course-btn-light" href="manage_courses.php">Clear</a><?php endif; ?>
-                    </form>
+
                 </div>
                 <?php if ($courses): ?>
                     <div class="course-table-wrap">
-                        <table class="course-table">
-                            <thead><tr><th>ID</th><th>Course</th><th>Category</th><th>Seats filled</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+                        <table class="course-table lms-admin-data" data-admin-datatable data-search="<?=escapeOutput($searchTerm)?>" data-empty="No courses found.">
+                            <thead><tr><th>ID</th><th>Course</th><th>Category</th><th>Instructor</th><th>Seats filled</th><th>Status</th><th>Created</th><th data-dt-order="disable">Actions</th></tr></thead>
                             <tbody>
                             <?php foreach ($courses as $course): ?>
                                 <tr>
                                     <td>#<?= (int) $course['id'] ?></td>
-                                    <td><div class="course-title-cell"><span class="course-title-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span><span class="course-title-text"><strong><?= escapeOutput($course['title']) ?></strong><span>Updated <?= escapeOutput(formatCourseDate($course['updated_at'] ?? null)) ?></span></span></div></td>
+                                    <td><div class="course-title-cell"><span class="course-title-icon"><?php if($cover=lmsImageDataUri($course['cover_image_base64']??null)):?><img class="lms-course-thumb" src="<?=escapeOutput($cover)?>" alt="" loading="lazy"><?php else:?><i class="fa-solid fa-book-open" aria-hidden="true"></i><?php endif;?></span><span class="course-title-text"><strong><?= escapeOutput($course['title']) ?></strong><span>Updated <?= escapeOutput(formatCourseDate($course['updated_at'] ?? null)) ?></span></span></div></td>
                                     <td><?= escapeOutput($course['category_name']) ?><?= ($course['category_status'] ?? '') !== 'active' ? ' (Inactive)' : '' ?></td>
+                                    <td><?=escapeOutput($course['instructor_name']??'Unassigned')?></td>
                                     <td><strong><?= (int)$course['occupied_seats'] ?> / <?= (int)$course['seat_capacity'] ?></strong><?= (int)$course['occupied_seats'] >= (int)$course['seat_capacity'] ? ' · Full' : '' ?></td>
                                     <td><span class="course-status course-status-<?= escapeOutput($course['status']) ?>"><?= escapeOutput($course['status']) ?></span></td>
                                     <td><?= escapeOutput(formatCourseDate($course['created_at'] ?? null)) ?></td>
@@ -585,7 +609,6 @@ if ($formError !== '') {
                             </tbody>
                         </table>
                     </div>
-                    <div class="course-panel-footer">Showing <?= number_format(count($courses)) ?> course<?= count($courses) === 1 ? '' : 's' ?><?= $searchTerm !== '' ? ' matching “' . escapeOutput($searchTerm) . '”' : '' ?>.</div>
                 <?php else: ?>
                     <div class="course-empty"><i class="fa-regular fa-folder-open" aria-hidden="true"></i><strong><?= $searchTerm !== '' ? 'No matching courses found' : 'No courses have been added yet' ?></strong><span><?= $searchTerm !== '' ? 'Try another search term or clear your search.' : 'Use the form above to add your first course.' ?></span></div>
                 <?php endif; ?>
@@ -674,5 +697,7 @@ if ($formError !== '') {
         });
     });
 </script>
+<script src="../../js/lms-media.js" defer></script>
+<script src="https://cdn.datatables.net/v/dt/dt-3.1.5/datatables.min.js"></script><script src="../../js/admin-datatables.js" defer></script>
 </body>
 </html>

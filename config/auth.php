@@ -7,7 +7,7 @@ header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 require_once __DIR__ . '/database.php';
-$authQuery = $pdo->prepare('SELECT id, full_name, email, role, status FROM users WHERE id = ?');
+$authQuery = $pdo->prepare('SELECT id, full_name, email, role, status, profile_photo_base64 FROM users WHERE id = ?');
 $authQuery->execute([$_SESSION['user_id'] ?? 0]);
 $currentUser = $authQuery->fetch();
 if (!$currentUser || $currentUser['status'] !== 'active') {

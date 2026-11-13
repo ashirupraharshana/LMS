@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/../../config/image_helpers.php';
+require_once __DIR__ . '/../../config/design_media.php';
 
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
@@ -88,12 +90,14 @@ try {
                 c.title,
                 c.description,
                 c.seat_capacity,
+                c.cover_image_base64,
                 (SELECT COUNT(*) FROM course_applications a WHERE a.course_id=c.id AND a.status='approved') AS occupied_seats,
                 c.created_at,
-                cc.name AS category_name
+                cc.name AS category_name, ins.full_name AS instructor_name
             FROM courses AS c
             INNER JOIN course_categories AS cc
                 ON cc.id = c.category_id
+            LEFT JOIN instructors ins ON ins.id = c.instructor_id
             WHERE c.status = 'published'
               AND cc.status = 'active'";
 
@@ -577,6 +581,7 @@ try {
         }
     </style>
 <link rel="stylesheet" href="../../public/css/theme.css">
+<link rel="stylesheet" href="../../public/css/media-pages.css">
 </head>
 
 <body>
@@ -680,11 +685,13 @@ try {
                 <section class="public-courses-grid" aria-label="Available courses">
                     <?php foreach ($courses as $course): ?>
                         <article class="public-course-card">
+                            <div class="lms-public-cover"><?php if($cover=lmsImageDataUri($course['cover_image_base64']??null)):?><img src="<?=coursePageEscape($cover)?>" alt="<?=coursePageEscape($course['title'])?> cover" loading="lazy"><?php elseif($placeholder=lmsDesignImage('course_placeholder')):?><img src="<?=coursePageEscape($placeholder)?>" alt="" loading="lazy"><?php else:?><span>COURSE / PHOTO SPACE</span><?php endif; ?></div>
                             <div class="public-course-card-top">
                                 <span class="public-course-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
                                 <span class="public-course-category"><?= coursePageEscape($course['category_name'] ?? 'Uncategorized') ?></span>
                             </div>
                             <h2><?= coursePageEscape($course['title'] ?? 'Untitled course') ?></h2>
+                            <?php if(!empty($course['instructor_name'])): ?><p class="lms-course-tutor">Instructor: <?=coursePageEscape($course['instructor_name'])?></p><?php endif; ?>
                             <?php $description = trim((string) ($course['description'] ?? '')); ?>
                             <?php if ($description !== ''): ?>
                                 <p class="public-course-description"><?= coursePageEscape($description) ?></p>

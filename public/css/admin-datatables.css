@@ -1,0 +1,85 @@
+/* Monochrome DataTables for the LMS admin area. */
+:root { --lms-dt-line: #e3e3e3; --lms-dt-ink: #141414; --lms-dt-muted: #656565; }
+.dt-container { width: 100%; color: var(--lms-dt-ink); font-family: inherit; font-size: 13px; }
+.dt-container .dt-layout-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; column-gap: 16px; row-gap: 12px; margin: 14px 0; }
+.dt-container .dt-layout-cell { min-width: 0; }
+.dt-container .dt-search, .dt-container .dt-length { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; color: var(--lms-dt-muted); font-weight: 600; }
+.dt-container .dt-search label, .dt-container .dt-length label { font-size: 12px; color: var(--lms-dt-muted); }
+.dt-container .dt-input, .dt-container select.dt-input { min-width: 0; min-height: 39px; padding: 9px 12px; border: 1px solid #d5d5d5; background: #fff; border-radius: 10px; color: #151515; font: inherit; box-shadow: none; outline: none; }
+.dt-container .dt-search input.dt-input { width: min(280px, 100%); }
+.dt-container select.dt-input { min-width: 80px; padding-right: 24px; }
+.dt-container .dt-input:focus-visible { border-color: #1b1b1b; box-shadow: 0 0 0 3px rgba(0,0,0,.10); }
+.dt-container .dt-info { padding: 0; font-size: 12px; color: var(--lms-dt-muted); }
+.dt-container .dt-paging { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.dt-container .dt-paging button.dt-paging-button { min-width: 36px; min-height: 34px; padding: 7px 11px !important; margin: 0; color: #1c1c1c !important; background: #fff !important; border: 1px solid #dedede !important; border-radius: 8px; box-shadow: none !important; font-size: 12px; }
+.dt-container .dt-paging button.dt-paging-button.current, .dt-container .dt-paging button.dt-paging-button:hover:not(.disabled) { background: #151515 !important; color: #fff !important; border-color: #151515 !important; }
+.dt-container .dt-paging button.dt-paging-button.disabled { opacity: .45; cursor: not-allowed; }
+.dt-container .dt-scroll { max-width: 100%; }
+.dt-container .dt-scroll-body { overflow-x: auto !important; }
+.dt-container table.lms-admin-data { width: 100% !important; border-collapse: separate; border-spacing: 0; }
+.dt-container table.lms-admin-data th, .dt-container table.lms-admin-data td { text-align: left; vertical-align: middle; padding: 13px 12px; border-bottom: 1px solid var(--lms-dt-line); color: #252525; }
+.dt-container table.lms-admin-data th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; background: #f7f7f7; color: #444; font-weight: 750; }
+.dt-container table.lms-admin-data tbody tr:hover td { background: #fafafa; }
+.dt-container table.lms-admin-data td form { display: inline-flex; vertical-align: middle; }
+.dt-container table.lms-admin-data td .actions, .dt-container table.lms-admin-data td .category-row-actions, .dt-container table.lms-admin-data td .course-row-actions { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
+.dt-container table.lms-admin-data td small { display: block; color: #777; font-size: 11px; margin-top: 4px; }
+.dt-container table.lms-admin-data .lms-table-avatar { flex-shrink: 0; }
+.dt-container .dt-empty { text-align: center !important; padding: 28px 14px !important; color: #666 !important; }
+/* Reclaim the parent wrapper's space: DataTables scrollX owns horizontal scrolling. */
+.table-scroll:has(.dt-container), .category-table-wrap:has(.dt-container), .course-table-wrap:has(.dt-container) { overflow: visible; max-width: 100%; }
+.lms-instructor-list { margin-top: 8px; }
+.lms-dt-actions .btn { white-space: nowrap; }
+@media (max-width: 680px) {
+    .dt-container .dt-layout-row { align-items: stretch; flex-direction: column; }
+    .dt-container .dt-layout-cell { width: 100%; }
+    .dt-container .dt-search { align-items: stretch; flex-direction: column; }
+    .dt-container .dt-search input.dt-input { width: 100%; }
+    .dt-container .dt-paging { justify-content: center; }
+    .dt-container table.lms-admin-data th, .dt-container table.lms-admin-data td { padding: 10px 9px; }
+}
+
+
+/* Manage Courses - All Courses Table Spacing */
+.app .course-panel[aria-labelledby="courseListTitle"] > .course-table-wrap {
+    padding: 24px 28px 22px;
+    box-sizing: border-box;
+}
+
+/* Remove extra spacing around DataTables controls */
+.app .course-panel[aria-labelledby="courseListTitle"] .dt-layout-row:first-child {
+    margin-top: 0;
+}
+
+.app .course-panel[aria-labelledby="courseListTitle"] .dt-layout-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive spacing */
+@media (max-width: 680px) {
+    .app .course-panel[aria-labelledby="courseListTitle"] > .course-table-wrap {
+        padding: 16px 14px;
+    }
+}
+
+
+/* Course Categories - DataTables Spacing Fix */
+.app .category-panel[aria-labelledby="categoryListTitle"] > .category-table-wrap {
+    padding: 24px 28px 22px;
+    box-sizing: border-box;
+}
+
+/* Align DataTables controls */
+.app .category-panel[aria-labelledby="categoryListTitle"] .dt-layout-row:first-child {
+    margin-top: 0;
+}
+
+.app .category-panel[aria-labelledby="categoryListTitle"] .dt-layout-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 680px) {
+    .app .category-panel[aria-labelledby="categoryListTitle"] > .category-table-wrap {
+        padding: 16px 14px;
+    }
+}

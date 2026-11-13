@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/_portal.php';
+require_once __DIR__ . '/../../config/design_media.php';
 
 $stmt = $pdo->prepare(
     'SELECT a.id, a.status, a.created_at, c.title, cc.name AS category_name
@@ -45,7 +46,7 @@ spPageStart('Dashboard', $currentUser, 'dashboard.php');
         <a href="profile.php" class="sp-button sp-button-outline">Manage profile</a>
       </div>
     </div>
-    <div class="sp-hero-decoration" aria-hidden="true">L.</div>
+    <div class="sp-hero-decoration lms-student-hero-photo"><?php if($hero=lmsDesignImage('student_hero')):?><img src="<?=spH($hero)?>" alt="Learning journey"><?php else:?><span aria-hidden="true">✦</span><small>Student hero photo slot</small><?php endif;?></div>
   </section>
 
   <section class="sp-stats" aria-label="Application overview">

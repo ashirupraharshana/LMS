@@ -2,6 +2,7 @@
 declare(strict_types=1);
 $requiredRole = 'admin';
 require_once __DIR__ . '/../../config/auth.php';
+require_once __DIR__ . '/../../config/design_media.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -47,6 +48,9 @@ $stats = [
     'pending_applications' => 0,
     'inactive_students' => 0,
     'total_admins' => 0,
+    'total_courses' => 0,
+    'total_instructors' => 0,
+    'active_instructors' => 0,
 ];
 $recentStudents = [];
 $pendingStudents = [];
@@ -69,6 +73,11 @@ try {
          FROM users"
     );
     $stats = array_merge($stats, $statsStmt->fetch(PDO::FETCH_ASSOC) ?: []);
+
+    $stats['total_courses'] = (int)$pdo->query('SELECT COUNT(*) FROM courses')->fetchColumn();
+    $instructorStats = $pdo->query("SELECT COUNT(*) AS total, COALESCE(SUM(status='active'),0) AS active FROM instructors")->fetch(PDO::FETCH_ASSOC);
+    $stats['total_instructors'] = (int)($instructorStats['total']??0);
+    $stats['active_instructors'] = (int)($instructorStats['active']??0);
 
     $recentStmt = $pdo->query(
         "SELECT id, full_name, email, status, created_at
@@ -145,6 +154,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <link rel="stylesheet" href="../../Components/admin/style/navbar.css">
 <link rel="stylesheet" href="../../public/css/theme.css">
     <link rel="stylesheet" href="../../Components/admin/style/admin-mono.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/v/dt/dt-3.1.5/datatables.min.css"><link rel="stylesheet" href="../../public/css/admin-datatables.css"><link rel="stylesheet" href="../../Components/admin/style/admin-v2.css">
 </head>
 <body>
 <div class="app">
@@ -175,6 +185,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <div class="date-chip"><i class="fa-regular fa-calendar" aria-hidden="true"></i><?= escapeOutput(date('l, F j, Y')) ?></div>
             </section>
 
+            <div class="lms-dashboard-banner"><div><span class="lms-module-kicker">LEARNING MANAGEMENT</span><h2>One place to run your academy.</h2><p>Manage courses, instructor teams, and student applications.</p><div class="lms-dashboard-quick"><a href="manage_courses.php?create=1#courseForm">+ Create course</a><a href="instructors.php?view=create">+ Add instructor</a></div></div><div class="lms-decorative-slot"><?php if($photo=lmsDesignImage('admin_hero')): ?><img src="<?=escapeOutput($photo)?>" alt="Academy workspace"> <?php else: ?><span class="lms-slot-icon">✳</span><strong>Your academy photo</strong><small>config/design_media.php → admin_hero</small><?php endif; ?></div></div>
+
             <?php if ($dashboardError !== ''): ?>
                 <div class="alert" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span><?= escapeOutput($dashboardError) ?></span></div>
             <?php endif; ?>
@@ -195,6 +207,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <div class="stat-number"><?= number_format((int) $stats['pending_applications']) ?></div>
                     <div class="stat-foot">Course applications awaiting review</div>
                 </article>
+                <article class="stat-card"><div class="stat-top"><span class="stat-label">Total courses</span><span class="stat-icon"><i class="fa-solid fa-book-open"></i></span></div><div class="stat-number"><?=number_format((int)$stats['total_courses'])?></div><div class="stat-foot"><a href="manage_courses.php">Manage course catalogue</a></div></article>
+                <article class="stat-card"><div class="stat-top"><span class="stat-label">Instructors</span><span class="stat-icon"><i class="fa-solid fa-chalkboard-user"></i></span></div><div class="stat-number"><?=number_format((int)$stats['total_instructors'])?></div><div class="stat-foot"><a href="instructors.php?view=all">View faculty directory</a></div></article>
+                <article class="stat-card"><div class="stat-top"><span class="stat-label">Active instructors</span><span class="stat-icon"><i class="fa-solid fa-user-check"></i></span></div><div class="stat-number"><?=number_format((int)$stats['active_instructors'])?></div><div class="stat-foot"><a href="instructors.php?view=active">Available instructors</a></div></article>
                 <article class="stat-card">
                     <div class="stat-top"><span class="stat-label">Inactive students</span><span class="stat-icon"><i class="fa-solid fa-user-slash" aria-hidden="true"></i></span></div>
                     <div class="stat-number"><?= number_format((int) $stats['inactive_students']) ?></div>
@@ -210,7 +225,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     </div>
                     <?php if ($recentStudents): ?>
                         <div class="table-wrap">
-                            <table>
+                            <table class="lms-admin-data" data-admin-datatable data-compact="true">
                                 <thead><tr><th>Student</th><th>Status</th><th>Registered</th></tr></thead>
                                 <tbody>
                                 <?php foreach ($recentStudents as $student): ?>
@@ -263,5 +278,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     </main>
 </div>
 
+<script src="https://cdn.datatables.net/v/dt/dt-3.1.5/datatables.min.js"></script><script src="../../js/admin-datatables.js" defer></script>
 </body>
 </html>

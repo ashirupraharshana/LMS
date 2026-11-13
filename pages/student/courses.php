@@ -1,14 +1,17 @@
 <?php
 require_once __DIR__ . '/_portal.php';
+require_once __DIR__ . '/../../config/image_helpers.php';
+require_once __DIR__ . '/../../config/design_media.php';
 
 $search = is_string($_GET['q'] ?? null) ? trim($_GET['q']) : '';
 $search = function_exists('mb_substr') ? mb_substr($search, 0, 100, 'UTF-8') : substr($search, 0, 100);
 
-$sql = "SELECT c.id, c.title, c.description, c.seat_capacity, cc.name AS category_name,
+$sql = "SELECT c.id, c.title, c.description, c.seat_capacity, c.cover_image_base64, cc.name AS category_name, ins.full_name AS instructor_name,
                (SELECT COUNT(*) FROM course_applications a
                  WHERE a.course_id = c.id AND a.status = 'approved') AS occupied_seats
           FROM courses c
           JOIN course_categories cc ON cc.id = c.category_id
+          LEFT JOIN instructors ins ON ins.id = c.instructor_id
          WHERE c.status = 'published' AND cc.status = 'active'";
 $params = [];
 if ($search !== '') {
@@ -79,13 +82,15 @@ spPageStart('Courses', $currentUser, 'courses.php');
           $description = $description !== '' ? $description : 'Discover new skills and grow your knowledge with this course.';
         ?>
         <article class="sp-course-card">
-          <div class="sp-course-cover">
+          <div class="sp-course-cover <?=lmsImageDataUri($course['cover_image_base64']??null)?'lms-has-cover':''?>">
+            <?php if($cover=lmsImageDataUri($course['cover_image_base64']??null)): ?><img class="lms-course-card-image" src="<?=spH($cover)?>" alt="<?=spH($course['title'])?> cover" loading="lazy"><?php elseif($placeholder=lmsDesignImage('course_placeholder')): ?><img class="lms-course-card-image" src="<?=spH($placeholder)?>" alt="" loading="lazy"><?php endif; ?>
             <span class="sp-course-cover-num" aria-hidden="true"><?= str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) ?></span>
             <span class="sp-course-cover-type"><?= $isFull ? 'FULL' : 'OPEN' ?></span>
           </div>
           <div class="sp-course-body">
             <span class="sp-course-category"><?= spH($course['category_name']) ?></span>
             <h2 class="sp-course-title"><?= spH($course['title']) ?></h2>
+            <?php if(!empty($course['instructor_name'])): ?><p class="lms-course-tutor">Instructor: <?=spH($course['instructor_name'])?></p><?php endif; ?>
             <p class="sp-course-description"><?= spH($description) ?></p>
             <div class="sp-seat-info">
               <div class="sp-seat-line"><span><?= $taken ?> / <?= $capacity ?> seats filled</span><strong><?= $available ?> available</strong></div>

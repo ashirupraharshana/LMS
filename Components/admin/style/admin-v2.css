@@ -1,0 +1,61 @@
+/* LMS Admin v2 — photographed placeholders, structured nav, faculty cards. */
+:root{--lms-black:#111;--lms-gray:#767676;--lms-border:#e4e4e4}
+.app .sidebar{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#555 #111}
+.app .sidebar .brand{flex-shrink:0;padding-bottom:23px}
+.app .sidebar .nav-label{margin-top:14px;padding-top:9px!important;border-top:1px solid #292929}
+.app .sidebar .nav-links{gap:4px;flex-shrink:0}
+.app .sidebar .student-menu{margin:0;display:block}
+.app .sidebar .student-menu .subnav{padding-left:10px;margin-left:19px;border-left-color:#474747}
+.app .sidebar .student-menu .subnav a{font-size:11px;min-height:37px;padding:8px 10px!important}
+.app .sidebar .student-menu[open]>summary:not(.active){background:#222!important;color:#fff!important}
+.app .sidebar .nav-website{margin-top:16px;flex-shrink:0}
+.app .sidebar .sidebar-bottom{flex-shrink:0}
+.app .stat-foot a{color:#111;text-decoration:underline;text-underline-offset:2px}
+.lms-dashboard-banner,.lms-module-hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(230px,.7fr);gap:23px;align-items:stretch;border-radius:19px;padding:25px;background:#171717;color:#fff;margin:0 0 23px;overflow:hidden}
+.lms-dashboard-banner h2,.lms-module-hero h2{margin:9px 0 9px;font-size:clamp(23px,2.7vw,35px);line-height:1.16;letter-spacing:-.055em;color:white}
+.lms-dashboard-banner p,.lms-module-hero p{max-width:500px;margin:0 0 16px;color:#ccc;line-height:1.7;font-size:12.5px}
+.lms-module-kicker{font-size:10px;letter-spacing:.17em;font-weight:800;color:#aaa}
+.lms-dashboard-quick{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:17px}
+.lms-dashboard-quick a,.lms-hero-action{background:#fff!important;color:#111!important;display:inline-flex;text-decoration:none;font-size:12px;font-weight:800;padding:11px 15px;border-radius:9px;min-height:40px;align-items:center}
+.lms-decorative-slot{border:1px dashed #717171;min-height:180px;background:linear-gradient(135deg,#2a2a2a,#202020);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:7px;padding:16px;overflow:hidden;position:relative}
+.lms-decorative-slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lms-decorative-slot strong{color:#eee;font-size:13px}
+.lms-decorative-slot small{color:#a1a1a1;font-size:10px;overflow-wrap:anywhere}
+.lms-slot-icon{font-size:32px;color:#e6e6e6;line-height:1}
+.lms-stat-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:20px}
+.lms-mini-stat{text-decoration:none;background:#fff;border:1px solid #e3e3e3;border-radius:14px;padding:20px;min-width:0}
+.lms-mini-stat span{display:block;font-size:11px;font-weight:700;color:#777}
+.lms-mini-stat strong{display:block;font-size:30px;color:#111;margin-top:10px;line-height:1.1}
+.lms-instructor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+.lms-instructor-card{min-width:0;overflow:hidden;border:1px solid #e5e5e5;border-radius:17px;background:#fff}
+.lms-instructor-photo{height:170px;background:radial-gradient(circle at 68% 15%,#fefefe,#dedede);display:grid;place-items:center;overflow:hidden}
+.lms-instructor-photo img{width:100%;height:100%;object-fit:cover}
+.lms-photo-initial{display:grid;place-items:center;width:78px;height:78px;border:1px solid #bbb;border-radius:50%;font-size:32px;font-weight:850;color:#333;background:#f5f5f5}
+.lms-instructor-card-body{padding:19px}
+.lms-instructor-card h3{font-size:18px;letter-spacing:-.03em;margin:12px 0 4px;color:#111;overflow-wrap:anywhere}
+.lms-instructor-card p{margin:6px 0;overflow-wrap:anywhere}
+.lms-specialism{font-weight:750;font-size:12px;color:#333}
+.lms-muted{font-size:11px;color:#858585;line-height:1.5}
+.lms-status-pill{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:800;border:1px solid #dadada;border-radius:6px;padding:5px 8px;color:#222}
+.lms-card-actions{margin-top:18px;display:flex;gap:7px;flex-wrap:wrap}
+.lms-card-actions .btn{min-height:37px!important;padding:8px 11px!important;font-size:11px!important}
+.lms-card-actions form{margin:0}
+.lms-empty-instructors{grid-column:1/-1;text-align:center;padding:40px;border:1px dashed #d6d6d6;border-radius:16px;background:#fafafa}
+.lms-empty-instructors span{font-size:31px}.lms-empty-instructors h3{margin:8px 0;color:#111}.lms-empty-instructors p{color:#777}
+.lms-instructor-form .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.lms-instructor-form .form-grid label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:750;color:#292929}
+.lms-instructor-form .form-grid input,.lms-instructor-form .form-grid select,.lms-instructor-form .form-grid textarea{width:100%;min-width:0;border:1px solid #dadada;border-radius:9px;padding:12px;background:#fff;color:#222;font:inherit}
+.lms-full-width{grid-column:1/-1}
+.lms-edit-photo{width:min(240px,100%);height:155px;border:1px dashed #d0d0d0;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f6f6f6;color:#888;font-size:12px;margin:12px 0}
+.lms-edit-photo img{width:100%;height:100%;object-fit:cover}
+.lms-cover-preview{width:min(370px,100%);height:160px}
+.lms-checkbox{display:inline-flex;align-items:center!important;flex-direction:row!important;gap:7px!important;font-size:12px!important;font-weight:600!important;margin:9px 0 15px;cursor:pointer}
+.lms-checkbox input{width:auto!important;min-height:0!important}
+.lms-person-cell{display:flex;align-items:center;gap:11px;min-width:180px}
+.lms-table-avatar{display:grid;place-items:center;flex:0 0 37px;width:37px;height:37px;border-radius:10px;background:#ececec;color:#111;font-weight:850;overflow:hidden}
+.lms-table-avatar img,.lms-course-thumb{width:100%;height:100%;object-fit:cover}
+.course-title-icon:has(.lms-course-thumb){overflow:hidden;padding:0}
+.lms-instructor-form .actions{margin-top:15px}
+@media(max-width:1150px){.lms-instructor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.lms-dashboard-banner,.lms-module-hero{grid-template-columns:1fr;padding:18px}.lms-decorative-slot{min-height:150px}.lms-stat-row{gap:9px}.lms-mini-stat{padding:14px}.lms-mini-stat strong{font-size:23px}}
+@media(max-width:560px){.lms-instructor-grid{grid-template-columns:1fr}.lms-instructor-form .form-grid{grid-template-columns:1fr}.lms-stat-row{grid-template-columns:1fr 1fr}.lms-dashboard-quick a{width:100%;justify-content:center}}

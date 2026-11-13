@@ -107,3 +107,21 @@ body.student-portal { background: #f7f7f7 !important; color: #151515; font-famil
 @media(max-width: 1050px) { .student-portal .sp-stats { grid-template-columns: repeat(2,minmax(0,1fr)); } .student-portal .sp-course-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width: 760px) { .student-portal .sp-main { padding: 22px 16px 45px; } .student-portal .sp-content-grid, .student-portal .sp-profile-grid { grid-template-columns: 1fr; } .student-portal .sp-hero { grid-template-columns: 1fr; min-height: auto; border-radius: 17px; } .student-portal .sp-hero-decoration { display: none; } .student-portal .sp-panel { padding: 20px; } }
 @media(max-width: 550px) { .student-portal .sp-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; } .student-portal .sp-stat { padding: 15px 13px; border-radius: 12px; } .student-portal .sp-stat-value { font-size: 30px; } .student-portal .sp-course-grid, .student-portal .sp-form-grid { grid-template-columns: 1fr; } .student-portal .sp-field.sp-span-all { grid-column: auto; } .student-portal .sp-course-search { flex-basis: 100%; } .student-portal .sp-course-tools { padding: 12px; } .student-portal .sp-course-count { margin-left: 0; } .student-portal .sp-application-item { align-items: flex-start; flex-wrap: wrap; } .student-portal .sp-status { margin-left: 61px; } .student-portal .sp-hero-actions .sp-button { flex: 1 1 100%; } .student-portal .sp-page-heading h1 { font-size: 32px; } }
+
+/* Profile image, course cover, and user-supplied hero photograph */
+.student-portal .sp-profile-avatar{overflow:hidden}
+.student-portal .sp-profile-avatar img,.student-portal .sp-nav-avatar img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}
+.student-portal .sp-nav-avatar{overflow:hidden}
+.student-portal .lms-edit-photo{width:min(260px,100%);height:170px;border:1px dashed #ccc;border-radius:13px;background:#f7f7f7;display:flex;align-items:center;justify-content:center;margin:10px 0;overflow:hidden;color:#818181;font-size:12px}
+.student-portal .lms-edit-photo img{width:100%;height:100%;object-fit:cover}
+.student-portal .lms-checkbox{display:inline-flex;align-items:center;gap:9px;flex-direction:row;font-size:12px;cursor:pointer}
+.student-portal .lms-checkbox input{width:auto;min-height:auto}
+.student-portal .sp-course-cover{position:relative;overflow:hidden}
+.student-portal .sp-course-cover .lms-course-card-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.student-portal .sp-course-cover:has(.lms-course-card-image)>.sp-course-cover-num,.student-portal .sp-course-cover:has(.lms-course-card-image)>.sp-course-cover-type{position:relative;z-index:1;box-shadow:0 1px 8px rgba(0,0,0,.15)}
+.student-portal .sp-hero-decoration.lms-student-hero-photo{width:190px;height:150px;border-radius:18px;transform:none;overflow:hidden;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;text-align:center;font-size:35px;position:relative}
+.student-portal .lms-student-hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.student-portal .lms-student-hero-photo small{font-size:10px;line-height:1.4;letter-spacing:0;font-weight:500;color:#c6c6c6}
+@media(max-width:620px){.student-portal .sp-hero-decoration.lms-student-hero-photo{width:100%;max-width:320px;height:135px}}
+
+.student-portal .lms-course-tutor{font-size:11px;color:#555;font-weight:650;margin:0 0 12px}

@@ -4,6 +4,7 @@ $studentNavActive = $studentNavActive ?? basename((string) ($_SERVER['SCRIPT_NAM
 $studentName = trim((string) ($currentUser['full_name'] ?? 'Student'));
 $studentInitial = function_exists('mb_substr') ? mb_substr($studentName, 0, 1, 'UTF-8') : substr($studentName, 0, 1);
 $studentEscape = static fn (mixed $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+require_once __DIR__ . '/../../config/image_helpers.php';
 ?>
 <header class="sp-nav" id="studentNavbar">
   <div class="sp-nav-inner">
@@ -21,7 +22,7 @@ $studentEscape = static fn (mixed $value): string => htmlspecialchars((string) $
       <a class="sp-nav-link <?= in_array($studentNavActive, ['courses.php', 'apply_course.php'], true) ? 'is-active' : '' ?>" href="courses.php" <?= in_array($studentNavActive, ['courses.php', 'apply_course.php'], true) ? 'aria-current="page"' : '' ?>>Courses</a>
       <a class="sp-nav-link <?= $studentNavActive === 'profile.php' ? 'is-active' : '' ?>" href="profile.php" <?= $studentNavActive === 'profile.php' ? 'aria-current="page"' : '' ?>>Manage Profile</a>
       <div class="sp-nav-account">
-        <span class="sp-nav-avatar" aria-hidden="true"><?= $studentEscape(strtoupper($studentInitial)) ?></span>
+        <span class="sp-nav-avatar" aria-hidden="true"><?php if($photo=lmsImageDataUri($currentUser['profile_photo_base64']??null)):?><img src="<?=$studentEscape($photo)?>" alt=""><?php else:?><?=$studentEscape(strtoupper($studentInitial))?><?php endif;?></span>
         <span class="sp-nav-person"><strong><?= $studentEscape($studentName) ?></strong><small>Student account</small></span>
       </div>
       <form action="../admin/logout.php" method="post" class="sp-logout-form">

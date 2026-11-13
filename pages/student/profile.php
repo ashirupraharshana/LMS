@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/_portal.php';
+require_once __DIR__ . '/../../config/image_helpers.php';
 
-$profileStmt = $pdo->prepare('SELECT username, phone, password_hash, created_at FROM users WHERE id = ? AND role = ? LIMIT 1');
+$profileStmt = $pdo->prepare('SELECT username, phone, password_hash, created_at, profile_photo_base64 FROM users WHERE id = ? AND role = ? LIMIT 1');
 $profileStmt->execute([(int) $currentUser['id'], 'student']);
 $account = $profileStmt->fetch(PDO::FETCH_ASSOC);
 if (!$account) {
@@ -54,8 +55,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if (($emailChanged || $passwordChanged) && !password_verify($currentPassword, (string) $latestHash)) {
                 $error = 'Current password verification failed. Please try again.';
             } else {
-                $sql = 'UPDATE users SET full_name=:name, email=:email, phone=:phone';
-                $values = [':name' => $formName, ':email' => $formEmail, ':phone' => $formPhone, ':id' => (int) $currentUser['id']];
+                $photo = lmsUploadImage('profile_photo', $account['profile_photo_base64'] ?? null, 'remove_profile_photo');
+                $sql = 'UPDATE users SET full_name=:name, email=:email, phone=:phone, profile_photo_base64=:photo';
+                $values = [':name' => $formName, ':email' => $formEmail, ':phone' => $formPhone, ':photo' => $photo, ':id' => (int) $currentUser['id']];
                 if ($passwordChanged) {
                     $sql .= ', password_hash=:hash';
                     $values[':hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
@@ -71,6 +73,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 exit;
             }
             if ($pdo->inTransaction()) $pdo->rollBack();
+        } catch (InvalidArgumentException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            $error = $e->getMessage();
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
             if ($e->getCode() === '23000') {
@@ -105,8 +110,9 @@ spPageStart('Manage Profile', $currentUser, 'profile.php');
     <div>
       <section class="sp-panel">
         <div class="sp-panel-head"><div><h2>Personal information</h2><p>Changes here update your student account</p></div></div>
-        <form class="sp-form" method="post" action="profile.php">
+        <form class="sp-form" method="post" action="profile.php" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="<?= spH($_SESSION['csrf_token']) ?>">
+          <div class="sp-field sp-profile-photo-field"><label for="profilePhoto">Profile photo (JPG, PNG, WebP · max 1 MB)</label><input id="profilePhoto" type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp" data-image-preview="profilePhotoPreview"><div class="lms-edit-photo" id="profilePhotoPreview"><?php if($currentPhoto=lmsImageDataUri($account['profile_photo_base64']??null)):?><img src="<?=spH($currentPhoto)?>" alt="Current profile photo"><?php else:?><span>Your photo will appear here</span><?php endif;?></div><?php if(!empty($account['profile_photo_base64'])): ?><label class="lms-checkbox"><input type="checkbox" name="remove_profile_photo" value="1"> Remove current photo</label><?php endif; ?></div>
           <div class="sp-form-grid">
             <div class="sp-field"><label for="studentUsername">Username</label><input id="studentUsername" value="<?= spH($account['username'] ?? '') ?>" readonly><p class="sp-help">Your username is assigned by your administrator.</p></div>
             <div class="sp-field"><label for="studentFullName">Full name *</label><input id="studentFullName" name="full_name" required maxlength="120" autocomplete="name" value="<?= spH($formName) ?>"></div>
@@ -126,7 +132,7 @@ spPageStart('Manage Profile', $currentUser, 'profile.php');
       </section>
     </div>
     <aside class="sp-panel sp-profile-summary">
-      <div class="sp-profile-avatar" aria-hidden="true"><?= spH(strtoupper($initial)) ?></div>
+      <div class="sp-profile-avatar" aria-hidden="true"><?php if($photo=lmsImageDataUri($account['profile_photo_base64']??null)):?><img src="<?=spH($photo)?>" alt=""><?php else:?><?=spH(strtoupper($initial))?><?php endif;?></div>
       <h2><?= spH($currentUser['full_name']) ?></h2>
       <p><?= spH($currentUser['email']) ?></p>
       <dl class="sp-summary-data">
@@ -138,4 +144,5 @@ spPageStart('Manage Profile', $currentUser, 'profile.php');
     </aside>
   </div>
 </main>
+<script src="../../js/lms-media.js" defer></script>
 <?php spPageEnd(); ?>

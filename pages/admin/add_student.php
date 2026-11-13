@@ -5,10 +5,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $values=$_POST;
     try {
         checkCsrf(); [$name,$email,$phone,$status,$password,$username]=studentFields(true);
-        $q=$pdo->prepare("INSERT INTO users(full_name,email,phone,password_hash,role,status,username) VALUES(?,?,?,?,'student',?,?)");
-        $q->execute([$name,$email,$phone,password_hash($password,PASSWORD_DEFAULT),$status,$username]);
+        $photo=lmsUploadImage('profile_photo');
+        $q=$pdo->prepare("INSERT INTO users(full_name,email,phone,password_hash,role,status,username,profile_photo_base64) VALUES(?,?,?,?,'student',?,?,?)");
+        $q->execute([$name,$email,$phone,password_hash($password,PASSWORD_DEFAULT),$status,$username,$photo]);
         success('Student account created successfully.','manage_students.php');
     } catch (Throwable $e) { $error=operationError($e); }
 }
 startPage('Add student','Create a student account and choose its access status.');
-?><section class="card"><h2>Student details</h2><?php if($error):?><div class="notice error" role="alert"><?=h($error)?></div><?php endif;?><form method="post"><?php csrf(); studentForm($values); ?></form></section><?php endPage(); ?>
+?><section class="card"><h2>Student details</h2><?php if($error):?><div class="notice error" role="alert"><?=h($error)?></div><?php endif;?><form method="post" enctype="multipart/form-data"><?php csrf(); studentForm($values); ?></form></section><?php endPage(); ?>
