@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 13, 2026 at 08:10 AM
+-- Generation Time: Nov 13, 2026 at 09:31 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -34,6 +34,8 @@ CREATE TABLE `courses` (
   `description` text DEFAULT NULL,
   `status` enum('draft','published','archived') NOT NULL DEFAULT 'draft',
   `seat_capacity` int(10) UNSIGNED NOT NULL DEFAULT 30,
+  `instructor_id` int(10) UNSIGNED DEFAULT NULL,
+  `cover_image_base64` mediumtext DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -79,6 +81,26 @@ CREATE TABLE `course_categories` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `instructors`
+--
+
+CREATE TABLE `instructors` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `full_name` varchar(120) NOT NULL,
+  `email` varchar(190) NOT NULL,
+  `phone` varchar(30) DEFAULT NULL,
+  `specialization` varchar(160) NOT NULL,
+  `qualifications` varchar(500) DEFAULT NULL,
+  `bio` text DEFAULT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `photo_base64` mediumtext DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -89,6 +111,7 @@ CREATE TABLE `users` (
   `email` varchar(190) NOT NULL,
   `phone` varchar(30) DEFAULT NULL,
   `password_hash` varchar(255) NOT NULL,
+  `profile_photo_base64` mediumtext DEFAULT NULL,
   `role` enum('admin','student') NOT NULL DEFAULT 'student',
   `status` enum('active','inactive','pending') NOT NULL DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -105,7 +128,8 @@ CREATE TABLE `users` (
 ALTER TABLE `courses`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_course_category` (`category_id`),
-  ADD KEY `idx_course_status` (`status`);
+  ADD KEY `idx_course_status` (`status`),
+  ADD KEY `idx_course_instructor` (`instructor_id`);
 
 --
 -- Indexes for table `course_applications`
@@ -123,6 +147,14 @@ ALTER TABLE `course_applications`
 ALTER TABLE `course_categories`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `instructors`
+--
+ALTER TABLE `instructors`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_instructor_email` (`email`),
+  ADD KEY `idx_instructor_status` (`status`);
 
 --
 -- Indexes for table `users`
@@ -156,6 +188,12 @@ ALTER TABLE `course_categories`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `instructors`
+--
+ALTER TABLE `instructors`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
@@ -169,7 +207,8 @@ ALTER TABLE `users`
 -- Constraints for table `courses`
 --
 ALTER TABLE `courses`
-  ADD CONSTRAINT `fk_course_category` FOREIGN KEY (`category_id`) REFERENCES `course_categories` (`id`);
+  ADD CONSTRAINT `fk_course_category` FOREIGN KEY (`category_id`) REFERENCES `course_categories` (`id`),
+  ADD CONSTRAINT `fk_course_instructor` FOREIGN KEY (`instructor_id`) REFERENCES `instructors` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `course_applications`
